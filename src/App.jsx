@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import smartCVLogo from "./assets/SmartCV.svg";
 
-const OPENAI_MODEL = "gpt-4o-mini";
+const OPENAI_MODEL = "gpt-5.5";
 
 // Default example profile — replace with your own via the Edit Profile UI
 // Your real profile is saved in localStorage and never stored in code
