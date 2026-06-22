@@ -1,0 +1,34 @@
+<svg width="250" height="60" viewBox="0 0 250 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="primaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4F46E5" />
+      <stop offset="100%" stop-color="#9333EA" />
+    </linearGradient>
+    <linearGradient id="sparkleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#FCD34D" />
+    </linearGradient>
+  </defs>
+
+  <!-- Document Base -->
+  <path d="M12 12C12 8.68629 14.6863 6 18 6H34.5L48 19.5V48C48 51.3137 45.3137 54 42 54H18C14.6863 54 12 51.3137 12 48V12Z" fill="url(#primaryGrad)"/>
+  
+  <!-- Document Fold -->
+  <path d="M34.5 6V15C34.5 17.4853 36.5147 19.5 39 19.5H48L34.5 6Z" fill="#ffffff" fill-opacity="0.3"/>
+  
+  <!-- CV Text Lines -->
+  <rect x="20" y="24" width="16" height="3" rx="1.5" fill="#ffffff" fill-opacity="0.9"/>
+  <rect x="20" y="32" width="20" height="3" rx="1.5" fill="#ffffff" fill-opacity="0.9"/>
+  <rect x="20" y="40" width="12" height="3" rx="1.5" fill="#ffffff" fill-opacity="0.9"/>
+
+  <!-- Sparkle Main -->
+  <path d="M48 26C48 31 42 32 42 37C42 32 36 31 36 26C36 21 42 20 42 15C42 20 48 21 48 26Z" fill="url(#sparkleGrad)"/>
+  
+  <!-- Sparkle Small -->
+  <path d="M55 14C55 16.5 52 17 52 19.5C52 17 49 16.5 49 14C49 11.5 52 11 52 8.5C52 11 55 11.5 55 14Z" fill="url(#sparkleGrad)"/>
+
+  <!-- Text: Smart in white, CV in gradient -->
+  <text x="64" y="40" font-family="'Inter', 'Segoe UI', sans-serif" font-weight="800" font-size="24" fill="#ffffff">
+    Smart<tspan fill="url(#primaryGrad)">CV</tspan>
+  </text>
+</svg>
