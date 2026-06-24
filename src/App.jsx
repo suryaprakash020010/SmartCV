@@ -4,89 +4,10 @@ import { Document, Packer, Paragraph, TextRun, AlignmentType } from "docx";
 
 const OPENAI_MODEL = "gpt-4o";
 
-// Default example profile — replace with your own via the Edit Profile UI
-// Your real profile is saved in localStorage and never stored in code
-const YOUR_PROFILE = {
-  name: "Alex Johnson",
-  email: "alex.johnson@email.com",
-  phone: "+1 555 012 3456",
-  location: "San Francisco, CA 94105",
-  linkedin: "linkedin.com/in/alexjohnson",
-  portfolio: "alexjohnson.dev",
-  summary: "Final-semester Master of Data Science candidate (Distinction WAM 78.75) with hands-on experience in data engineering, full-stack development, and AI integration. Prior industry background at Acme Technology Corp with a strong interest in applied AI.",
-  skillCategories: [
-    { category: "Programming", skills: ["Python", "R", "Java", "JavaScript (Vue 3)"] },
-    { category: "Data & BI", skills: ["SQL", "Power BI"] },
-    { category: "Cloud & DevOps", skills: ["AWS (RDS, Amplify, Route 53)", "Git/GitHub"] }
-  ],
-  projects: [
-    {
-      role: "Data Engineer & Full-Stack Developer", name: "HardStaff Connect",
-      startDate: "Jul 2024", endDate: "Jun 2025",
-      bullets: [
-        "Built the full data pipeline processing 10 government datasets (CSV, SHP, PDF) using Python, including PDF extraction, spatial joins to match LGA with SA2, and KDTree nearest-city matching (SciPy).",
-        "Designed a normalised 12-table PostgreSQL schema on AWS RDS and built a FastAPI backend serving all application data.",
-        "Precomputed a school_incentive_lookup cache table (2,580 rows across 645 schools), reducing incentive calculator API response time from ~2 minutes to ~1,100ms — an 80–100x improvement.",
-        "Built the frontend in Vue 3, including an OpenStreetMap/Leaflet school location map (Epic 5) and GPT-4o AI Placement Summary feature (Epic 6).",
-        "Deployed on AWS Amplify with Route 53 custom domain (hardstaffconnect.app); industry partner Ignite Data and evaluators Fergal Coleman and Michael Fagan (Symphony3) endorsed the project at the expo.",
-        "Collaborated in a 4-person agile team (Shuwen, Lavanya, Yiren) across data, backend, and frontend tracks for FIT5120 Industry Experience Studio capstone."
-      ]
-    },
-    {
-      role: "Builder", name: "SmartCV",
-      startDate: "Jun 2025", endDate: "Present",
-      bullets: [
-        "Built a locally-run CV tailoring tool from scratch: React/Vite frontend, Flask backend for DOCX export, and Node.js pipeline, powered by OpenAI GPT.",
-        "Implemented iterative ATS scoring (55% keyword match / 25% structure / 20% quantified achievements) with keyword stemming and multi-profile management in localStorage.",
-        "Added gap analysis, keyword diff tracking, and an iterative retry loop that refines tailored output across up to 3 GPT calls to maximise ATS score.",
-        "Actively used for real job applications; key debugging included fixing an ESM/CJS module conflict, resolving a cursor-jumping bug via onBlur sync, and cleaning git history after an accidentally committed API key."
-      ]
-    },
-    {
-      role: "NLP Engineer", name: "CitationGuard / CitationCheck",
-      startDate: "2025", endDate: "Present",
-      bullets: [
-        "Built an end-to-end NLP pipeline to detect citation hallucinations in AI-generated documents, targeting existence hallucination (fabricated sources) and faithfulness hallucination (misrepresented findings).",
-        "Stage 1: queried Semantic Scholar, CrossRef, and PubMed APIs in parallel to verify citation existence.",
-        "Stage 2: fine-tuned DeBERTa-v3-base with LoRA on the SciFact dataset (1,409 labelled scientific claim-evidence pairs) to classify claim-source relationships as SUPPORTED / CONTRADICTED / INSUFFICIENT.",
-        "Designed to run end-to-end for under $5 AUD; personal hobby project."
-      ]
-    },
-  ],
-  experience: [
-    {
-      role: "Systems Engineer", company: "Acme Technology Corp",
-      startDate: "Aug 2022", endDate: "Jan 2024",
-      bullets: [
-        "Worked with electrical circuit diagrams for automobile clients, reviewing and validating technical documentation.",
-        "Used Excel macros extensively to process and analyse circuit data, then applied the same tooling to track historical project data and plan future work-hour allocation and timelines.",
-        "Awarded Certificate of Excellence (2023) for high-quality delivery and dedication to project goals."
-      ]
-    },
-    {
-      role: "Sales Intern", company: "Startup Co",
-      startDate: "May 2022", endDate: "Jul 2022",
-      bullets: [
-        "Worked with large sales datasets to identify leads, analyse trends, and generate actionable insights for reengaging high-volume former B2B clients.",
-        "Gained practical exposure to business concepts such as the Pareto principle and strategies to break that pattern by expanding the active client base."
-      ]
-    }
-  ],
-  education: [
-    {
-      degree: "Master of Data Science", institution: "State University",
-      startDate: "Jul 2024", endDate: "Present",
-      extra: "WAM: 78.75 (Distinction) | GPA: 3.25 | Final semester candidate",
-      notes: "Completed units in Machine Learning, NLP, Big Data, Data Wrangling and Data Visualisation. Reflecting a broad foundation in data science with a strong interest in applied AI"
-    },
-    {
-      degree: "Bachelor of Mechanical Engineering", institution: "City College",
-      startDate: "Aug 2018", endDate: "May 2022",
-      extra: "First Class Honours | Final Year Project: 3D Printed Composite Materials", notes: ""
-    }
-  ]
-};
-
+// profile.local.js is gitignored — put your real data there.
+// Falls back to profile.default.js (dummy data) when the local file doesn't exist.
+const _profileModules = import.meta.glob(["./profile.local.js", "./profile.default.js"], { eager: true });
+const YOUR_PROFILE = (_profileModules["./profile.local.js"] || _profileModules["./profile.default.js"]).default;
 // ── COLOURS ──────────────────────────────────────────────────────────────────
 const C = {
   bg:           "#F8FAFC",
