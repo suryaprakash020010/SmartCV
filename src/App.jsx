@@ -1,74 +1,121 @@
 import { useState, useEffect } from "react";
 import smartCVLogo from "./assets/SmartCV.svg";
+import { Document, Packer, Paragraph, TextRun, AlignmentType } from "docx";
 
-const OPENAI_MODEL = "gpt-5.5";
+const OPENAI_MODEL = "gpt-4o";
 
 // Default example profile — replace with your own via the Edit Profile UI
 // Your real profile is saved in localStorage and never stored in code
 const YOUR_PROFILE = {
   name: "Alex Johnson",
   email: "alex.johnson@email.com",
-  phone: "+61 400 000 000",
-  location: "Melbourne, VIC",
+  phone: "+1 555 012 3456",
+  location: "San Francisco, CA 94105",
   linkedin: "linkedin.com/in/alexjohnson",
-  summary: "Final-semester Master of Data Science candidate with hands-on experience in data engineering, full-stack development, and AI integration. Strong interest in applied machine learning and building production-ready data pipelines.",
+  portfolio: "alexjohnson.dev",
+  summary: "Final-semester Master of Data Science candidate (Distinction WAM 78.75) with hands-on experience in data engineering, full-stack development, and AI integration. Prior industry background at Acme Technology Corp with a strong interest in applied AI.",
   skillCategories: [
-    { category: "Programming", skills: ["Python", "R", "Java", "JavaScript"] },
+    { category: "Programming", skills: ["Python", "R", "Java", "JavaScript (Vue 3)"] },
     { category: "Data & BI", skills: ["SQL", "Power BI"] },
-    { category: "Cloud & DevOps", skills: ["AWS", "Git/GitHub"] }
+    { category: "Cloud & DevOps", skills: ["AWS (RDS, Amplify, Route 53)", "Git/GitHub"] }
   ],
   projects: [
     {
-      role: "Data Engineer & Full-Stack Developer", name: "Example Project",
-      startDate: "Jan 2024", endDate: "Jun 2025",
+      role: "Data Engineer & Full-Stack Developer", name: "HardStaff Connect",
+      startDate: "Jul 2024", endDate: "Jun 2025",
       bullets: [
-        "Built a data pipeline processing 10 government datasets using Python, spatial joins, and KDTree nearest-city matching.",
-        "Designed a PostgreSQL database schema on AWS RDS.",
-        "Optimised API response time by building a precomputed lookup cache, reducing latency ~80x.",
-        "Integrated OpenAI GPT-4o to generate AI-powered summaries."
+        "Built the full data pipeline processing 10 government datasets (CSV, SHP, PDF) using Python, including PDF extraction, spatial joins to match LGA with SA2, and KDTree nearest-city matching (SciPy).",
+        "Designed a normalised 12-table PostgreSQL schema on AWS RDS and built a FastAPI backend serving all application data.",
+        "Precomputed a school_incentive_lookup cache table (2,580 rows across 645 schools), reducing incentive calculator API response time from ~2 minutes to ~1,100ms — an 80–100x improvement.",
+        "Built the frontend in Vue 3, including an OpenStreetMap/Leaflet school location map (Epic 5) and GPT-4o AI Placement Summary feature (Epic 6).",
+        "Deployed on AWS Amplify with Route 53 custom domain (hardstaffconnect.app); industry partner Ignite Data and evaluators Fergal Coleman and Michael Fagan (Symphony3) endorsed the project at the expo.",
+        "Collaborated in a 4-person agile team (Shuwen, Lavanya, Yiren) across data, backend, and frontend tracks for FIT5120 Industry Experience Studio capstone."
       ]
-    }
+    },
+    {
+      role: "Builder", name: "SmartCV",
+      startDate: "Jun 2025", endDate: "Present",
+      bullets: [
+        "Built a locally-run CV tailoring tool from scratch: React/Vite frontend, Flask backend for DOCX export, and Node.js pipeline, powered by OpenAI GPT.",
+        "Implemented iterative ATS scoring (55% keyword match / 25% structure / 20% quantified achievements) with keyword stemming and multi-profile management in localStorage.",
+        "Added gap analysis, keyword diff tracking, and an iterative retry loop that refines tailored output across up to 3 GPT calls to maximise ATS score.",
+        "Actively used for real job applications; key debugging included fixing an ESM/CJS module conflict, resolving a cursor-jumping bug via onBlur sync, and cleaning git history after an accidentally committed API key."
+      ]
+    },
+    {
+      role: "NLP Engineer", name: "CitationGuard / CitationCheck",
+      startDate: "2025", endDate: "Present",
+      bullets: [
+        "Built an end-to-end NLP pipeline to detect citation hallucinations in AI-generated documents, targeting existence hallucination (fabricated sources) and faithfulness hallucination (misrepresented findings).",
+        "Stage 1: queried Semantic Scholar, CrossRef, and PubMed APIs in parallel to verify citation existence.",
+        "Stage 2: fine-tuned DeBERTa-v3-base with LoRA on the SciFact dataset (1,409 labelled scientific claim-evidence pairs) to classify claim-source relationships as SUPPORTED / CONTRADICTED / INSUFFICIENT.",
+        "Designed to run end-to-end for under $5 AUD; personal hobby project."
+      ]
+    },
   ],
   experience: [
     {
-      role: "Systems Engineer", company: "Example Company",
+      role: "Systems Engineer", company: "Acme Technology Corp",
       startDate: "Aug 2022", endDate: "Jan 2024",
       bullets: [
-        "Reviewed and validated technical documentation for engineering clients.",
-        "Used Excel macros to process and analyse data and track project timelines.",
-        "Awarded Certificate of Excellence for high-quality delivery."
+        "Worked with electrical circuit diagrams for automobile clients, reviewing and validating technical documentation.",
+        "Used Excel macros extensively to process and analyse circuit data, then applied the same tooling to track historical project data and plan future work-hour allocation and timelines.",
+        "Awarded Certificate of Excellence (2023) for high-quality delivery and dedication to project goals."
+      ]
+    },
+    {
+      role: "Sales Intern", company: "Startup Co",
+      startDate: "May 2022", endDate: "Jul 2022",
+      bullets: [
+        "Worked with large sales datasets to identify leads, analyse trends, and generate actionable insights for reengaging high-volume former B2B clients.",
+        "Gained practical exposure to business concepts such as the Pareto principle and strategies to break that pattern by expanding the active client base."
       ]
     }
   ],
   education: [
     {
-      degree: "Master of Data Science", institution: "Example University",
-      startDate: "2023", endDate: "2025",
-      extra: "GPA: 3.5 | Final semester candidate",
-      notes: "Completed units in Machine Learning, NLP, Big Data, and Data Visualisation."
+      degree: "Master of Data Science", institution: "State University",
+      startDate: "Jul 2024", endDate: "Present",
+      extra: "WAM: 78.75 (Distinction) | GPA: 3.25 | Final semester candidate",
+      notes: "Completed units in Machine Learning, NLP, Big Data, Data Wrangling and Data Visualisation. Reflecting a broad foundation in data science with a strong interest in applied AI"
+    },
+    {
+      degree: "Bachelor of Mechanical Engineering", institution: "City College",
+      startDate: "Aug 2018", endDate: "May 2022",
+      extra: "First Class Honours | Final Year Project: 3D Printed Composite Materials", notes: ""
     }
   ]
 };
 
 // ── COLOURS ──────────────────────────────────────────────────────────────────
 const C = {
-  bg:       "#07090f",
-  surface:  "#0d1117",
-  card:     "#111827",
-  border:   "#1f2937",
-  blue:     "#3b82f6",
-  blueDark: "#1d4ed8",
-  purple:   "#8b5cf6",
-  teal:     "#14b8a6",
-  green:    "#10b981",
-  amber:    "#f59e0b",
-  red:      "#ef4444",
-  textPrimary:   "#f1f5f9",
-  textSecondary: "#64748b",
-  textMuted:     "#374151",
+  bg:           "#F8FAFC",
+  surface:      "#F1F5F9",
+  card:         "#FFFFFF",
+  border:       "#E2E8F0",
+  // Single blue accent family — all decorative colour comes from here
+  blue:         "#3b82f6",
+  blueDark:     "#1d4ed8",
+  blueMid:      "#60a5fa",   // blue-400 — score bar variant
+  blueFaded:    "#EFF6FF",   // blue-50 — surface tint
+  blueBorder:   "#BFDBFE",   // blue-200
+  blueText:     "#1d4ed8",   // dark blue text on blueFaded
+  purple:       "#8b5cf6",   // kept only for GRAD
+  // Semantic only — success / error
+  green:        "#166534",
+  greenBg:      "#DCFCE7",
+  greenBorder:  "#86efac",
+  red:          "#991B1B",
+  redBg:        "#FEE2E2",
+  // Text
+  textPrimary:  "#1E293B",
+  textSecondary:"#64748B",
+  textMuted:    "#94A3B8",
 };
 
 const GRAD = `linear-gradient(135deg, ${C.blue}, ${C.purple})`;
+// Score bar colours — three shades of blue so the bars feel unified
+const BAR_COLORS = { keyword: C.blue, structure: C.blueDark, quant: C.blueMid };
 
 // ── ATS SCORING ──────────────────────────────────────────────────────────────
 function profileToText(profile, useTailored, tailored) {
@@ -85,15 +132,43 @@ function profileToText(profile, useTailored, tailored) {
   ].filter(Boolean).join(" ");
 }
 
-function computeATSScore(profile, jdText, useTailored, tailored) {
-  const cvText = profileToText(profile, useTailored, tailored);
+function extractJDKeywords(jdText) {
+  const softWords = new Set(["the","and","or","for","with","to","a","an","of","in","on","at","is","are","will","be","as","by","that","this","we","you","our","your","their","have","has","from","which","who","can","not","all","more","also","its","it","into","about","such","these","those","other","each","been","than","then","when","while","if","but","out","up","do","so","may","over","per","any","some","they","them","was","were","had","would","could","should","both","well","use","using","used","make","made","work","working","based","need","needs","required","including","experience","ability","strong","excellent","role","team","join","looking","seeking","ideal","candidate","plus","bonus","desired","preferred","responsible","responsibilities","duties","environment","opportunity","company","business","position","knowledge","understanding","familiarity","proficiency","skills","skill","ability","abilities","ensure","support","provide","deliver","drive","manage","build","develop","design","implement","maintain","create","enable","improve","collaborate","communicate","cross","functional"]);
   const jdLower = jdText.toLowerCase();
+  // Count word frequency to identify important terms
+  const wordFreq = {};
+  (jdLower.match(/\b[a-z][a-z0-9+#.\-]{1,30}\b/g) || []).forEach(w => { wordFreq[w] = (wordFreq[w] || 0) + 1; });
+  // Extract capitalized/acronym terms from original JD (these are almost always tech/domain keywords)
+  const capitalTerms = new Set((jdText.match(/\b[A-Z][A-Za-z0-9+#.\-]{1,30}\b/g) || []).map(w => w.toLowerCase()));
+  const allWords = Object.keys(wordFreq);
+  const keywords = [...new Set(allWords.filter(w =>
+    !softWords.has(w) &&
+    w.length > 2 &&
+    // Keep if: appears 2+ times, OR is capitalised in original JD, OR looks like a tech term (contains digit, +, #, .)
+    (wordFreq[w] >= 2 || capitalTerms.has(w) || /[0-9+#.]/.test(w))
+  ))];
+  return keywords;
+}
+
+function computeATSScore(profile, jdText, useTailored, tailored) {
+  // When scoring a tailored CV, match against the union of original + tailored text so that
+  // rephrasing a bullet never loses a keyword that's still genuinely on the CV.
+  const cvText = useTailored
+    ? profileToText(profile, true, tailored) + " " + profileToText(profile, false, {})
+    : profileToText(profile, false, {});
   const cvLower = cvText.toLowerCase();
-  const stopwords = new Set(["the","and","or","for","with","to","a","an","of","in","on","at","is","are","will","be","as","by","that","this","we","you","our","your","their","have","has","from","which","who","can","not","all","more","also","its","it","into","about","such","these","those","other","each","been","than","then","when","while","if","but","out","up","do","so","may","over","per","any","some","they","them","was","were","had","would","could","should","both","well","use","using","used","make","made","work","working","based","need","needs","required","including","experience","ability","strong","excellent"]);
-  const jdWords = [...new Set((jdLower.match(/\b[a-z][a-z0-9+#.\-]{1,30}\b/g) || []).filter(w => !stopwords.has(w) && w.length > 2))];
-  const matched = jdWords.filter(kw => cvLower.includes(kw));
-  const keywordScore = jdWords.length > 0 ? Math.round((matched.length / jdWords.length) * 100) : 0;
-  const missing = jdWords.filter(kw => !cvLower.includes(kw)).slice(0, 15);
+  const jdKeywords = extractJDKeywords(jdText);
+  // Stem-aware matching: also match plural/verb forms
+  const matched = jdKeywords.filter(kw => {
+    if (cvLower.includes(kw)) return true;
+    // Check common stem variants
+    if (kw.endsWith("ing") && cvLower.includes(kw.slice(0, -3))) return true;
+    if (kw.endsWith("ed") && cvLower.includes(kw.slice(0, -2))) return true;
+    if (kw.endsWith("s") && kw.length > 4 && cvLower.includes(kw.slice(0, -1))) return true;
+    return false;
+  });
+  const keywordScore = jdKeywords.length > 0 ? Math.round((matched.length / jdKeywords.length) * 100) : 0;
+  const missing = jdKeywords.filter(kw => !matched.includes(kw)).slice(0, 15);
 
   const skillCats = (useTailored && tailored?.reorderedSkillCategories) || profile.skillCategories || [];
   const projects  = (useTailored && tailored?.reorderedProjects)        || profile.projects || [];
@@ -107,7 +182,7 @@ function computeATSScore(profile, jdText, useTailored, tailored) {
   return {
     finalScore: Math.round(keywordScore * 0.55 + structScore * 0.25 + quantScore * 0.20),
     keywordScore, structScore, quantScore,
-    matchedCount: matched.length, totalKeywords: jdWords.length, missingKeywords: missing
+    matchedCount: matched.length, totalKeywords: jdKeywords.length, missingKeywords: missing
   };
 }
 
@@ -115,13 +190,18 @@ function computeATSScore(profile, jdText, useTailored, tailored) {
 function AnimatedScore({ target, size = 128 }) {
   const [val, setVal] = useState(0);
   useEffect(() => {
-    let cur = 0;
-    const step = () => { cur = Math.min(cur + 2, target); setVal(cur); if (cur < target) requestAnimationFrame(step); };
-    const t = setTimeout(() => requestAnimationFrame(step), 400);
-    return () => clearTimeout(t);
+    let cur = 0, raf;
+    const step = () => {
+      cur += (target - cur) * 0.07;
+      if (Math.abs(target - cur) < 0.5) cur = target;
+      setVal(Math.round(cur));
+      if (cur < target) raf = requestAnimationFrame(step);
+    };
+    const t = setTimeout(() => { raf = requestAnimationFrame(step); }, 300);
+    return () => { clearTimeout(t); cancelAnimationFrame(raf); };
   }, [target]);
   const r = size * 0.42, cx = size / 2, cy = size / 2, circ = 2 * Math.PI * r;
-  const color = val >= 75 ? C.green : val >= 50 ? C.amber : C.red;
+  const color = val >= 75 ? C.blue : val >= 50 ? C.blueMid : C.red;
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
       <circle cx={cx} cy={cy} r={r} fill="none" stroke={C.border} strokeWidth={size * 0.078} />
@@ -156,40 +236,138 @@ function ScoreBar({ label, value, color }) {
 }
 
 // ── DIFF LINE ─────────────────────────────────────────────────────────────────
-function DiffLine({ original, tailored }) {
-  if (original === tailored) return null;
+function DiffLine({ original, tailored, onEdit }) {
+  if (original === tailored && !onEdit) return null;
   return (
     <div style={{ marginBottom: 14, animation: "fadeUp 0.4s ease both" }}>
-      <div style={{ fontSize: 12.5, color: C.red, marginBottom: 5, opacity: 0.8, lineHeight: 1.6, textDecoration: "line-through" }}>{original}</div>
-      <div style={{ fontSize: 12.5, color: C.green, lineHeight: 1.6 }}>{tailored}</div>
+      {original && original !== tailored && (
+        <div style={{ fontSize: 12.5, color: C.red, background: C.redBg, border: `1px solid ${C.red}33`, borderRadius: 6, padding: "6px 10px", marginBottom: 6, lineHeight: 1.6, textDecoration: "line-through", opacity: 0.85 }} aria-label="removed">{original}</div>
+      )}
+      {onEdit ? (
+        <textarea
+          value={tailored}
+          onChange={e => onEdit(e.target.value)}
+          rows={Math.max(2, Math.ceil(tailored.length / 90))}
+          style={{ width: "100%", fontSize: 12.5, color: C.green, background: C.greenBg, border: `1px solid ${C.greenBorder}`, borderRadius: 6, padding: "6px 10px", lineHeight: 1.6, resize: "vertical", fontFamily: "inherit", fontWeight: 600, boxSizing: "border-box" }}
+          aria-label="edit tailored bullet"
+        />
+      ) : (
+        <div style={{ fontSize: 12.5, color: C.green, background: C.greenBg, border: `1px solid ${C.greenBorder}`, borderRadius: 6, padding: "6px 10px", lineHeight: 1.6, fontWeight: 600 }} aria-label="added">{tailored}</div>
+      )}
     </div>
   );
 }
 
 // ── CV PREVIEW ────────────────────────────────────────────────────────────────
 function CVPreview({ profile, tailored }) {
-  const summary     = tailored?.tailoredSummary || profile.summary;
-  const skillCats   = tailored?.reorderedSkillCategories || profile.skillCategories || [];
-  const projects    = tailored?.reorderedProjects  || profile.projects  || [];
-  const experience  = tailored?.reorderedExperience || profile.experience || [];
-  const education   = profile.education || [];
+  const innerRef = { current: null };
+  const [overflow, setOverflow] = useState(false);
+
+  const measureRef = (el) => {
+    innerRef.current = el;
+    if (!el) return;
+    // Use ResizeObserver so measurement fires after layout settles
+    const ro = new ResizeObserver(() => {
+      setOverflow(el.scrollHeight > el.clientHeight + 2);
+    });
+    ro.observe(el);
+    // Store cleanup on the element itself to disconnect on unmount
+    el._ro = ro;
+  };
+
+  useEffect(() => {
+    return () => { if (innerRef.current?._ro) innerRef.current._ro.disconnect(); };
+  }, []);
+
+  const summary    = tailored?.tailoredSummary || profile.summary;
+  const skillCats  = tailored?.reorderedSkillCategories || profile.skillCategories || [];
+  const projects   = tailored?.reorderedProjects  || profile.projects  || [];
+  const experience = tailored?.reorderedExperience || profile.experience || [];
+  const education  = profile.education || [];
+
+  // Mirror DOCX margins: 900 twips ≈ 15.9mm → ~6% of A4 width
+  const PAD = "5% 6.3%";
   const SH = ({ t }) => (
-    <div style={{ marginTop: 14, marginBottom: 5 }}>
-      <div style={{ fontSize: 10.5, fontWeight: 700, color: "#2563eb", letterSpacing: "0.05em" }}>{t}</div>
-      <div style={{ height: 1.5, background: "#1e3a5f", marginTop: 2 }} />
+    <div style={{ marginTop: 7, marginBottom: 3 }}>
+      <div style={{ fontSize: 8, fontWeight: 700, color: "#2563eb", letterSpacing: "0.1em", textTransform: "uppercase" }}>{t}</div>
+      <div style={{ height: 1, background: "#2563eb", marginTop: 2, opacity: 0.5 }} />
     </div>
   );
+  const EntryHeader = ({ left, date }) => (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 1 }}>
+      <span style={{ fontWeight: 700, fontSize: 8.5, color: "#1e3a5f" }}>{left}</span>
+      {date && <span style={{ fontSize: 7.5, color: "#555", flexShrink: 0, marginLeft: 6 }}>{date}</span>}
+    </div>
+  );
+  const Bullet = ({ text }) => (
+    <div style={{ fontSize: 8, color: "#222", lineHeight: 1.45, paddingLeft: 10, marginTop: 1 }}>• {text}</div>
+  );
+
   return (
-    <div style={{ background: "white", borderRadius: 10, padding: "22px 26px", color: "#111", fontFamily: "Calibri, Georgia, serif", maxHeight: 580, overflowY: "auto" }}>
-      <div style={{ textAlign: "center", marginBottom: 10 }}>
-        <div style={{ fontSize: 17, fontWeight: 700, color: "#1e3a5f" }}>{profile.name}</div>
-        <div style={{ fontSize: 9.5, color: "#444", marginTop: 3 }}>{[profile.location, profile.email, profile.phone, profile.linkedin].filter(Boolean).join(" | ")}</div>
+    <div>
+      {/* Outer wrapper: padding-bottom trick locks the height to A4 ratio (297/210 = 141.43%) */}
+      <div style={{ position: "relative", width: "100%", paddingBottom: "141.43%", borderRadius: 8, boxShadow: "0 4px 24px #00000040", overflow: "hidden" }}>
+        {/* Inner absolutely-positioned page — overflow:hidden clips to exactly 1 page */}
+        <div ref={measureRef} style={{
+          position: "absolute", inset: 0,
+          background: "white", color: "#111",
+          fontFamily: "Calibri, Arial, sans-serif",
+          padding: PAD, boxSizing: "border-box",
+          overflow: "hidden",
+        }}>
+          {/* Name + contact — centred, matches DOCX */}
+          <div style={{ textAlign: "center", marginBottom: 5 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#1e3a5f", letterSpacing: "0.02em" }}>{profile.name}</div>
+            <div style={{ fontSize: 7.5, color: "#444", marginTop: 2 }}>{[profile.location, profile.email, profile.phone, profile.linkedin, profile.portfolio].filter(Boolean).join("  |  ")}</div>
+          </div>
+
+          {summary && <><SH t="PROFILE" /><p style={{ margin: "2px 0 4px", fontSize: 8, lineHeight: 1.5, color: "#222" }}>{summary}</p></>}
+
+          {skillCats.length > 0 && <><SH t="TECHNICAL SKILLS" />
+            <div style={{ marginBottom: 3 }}>
+              {skillCats.map((c, i) => (
+                <div key={i} style={{ fontSize: 8, marginBottom: 2, lineHeight: 1.4 }}>
+                  <span style={{ fontWeight: 700 }}>{c.category}: </span>
+                  <span style={{ color: "#333" }}>{(c.skills || []).join(", ")}</span>
+                </div>
+              ))}
+            </div>
+          </>}
+
+          {projects.length > 0 && <><SH t="KEY PROJECTS" />
+            {projects.map((p, i) => (
+              <div key={i} style={{ marginBottom: 5 }}>
+                <EntryHeader left={[p.role, p.name].filter(Boolean).join(" | ")} date={[p.startDate, p.endDate].filter(Boolean).join(" – ")} />
+                {(p.tailoredBullets || p.bullets || []).map((b, j) => <Bullet key={j} text={b} />)}
+              </div>
+            ))}
+          </>}
+
+          {experience.length > 0 && <><SH t="PROFESSIONAL EXPERIENCE" />
+            {experience.map((e, i) => (
+              <div key={i} style={{ marginBottom: 5 }}>
+                <EntryHeader left={`${e.role} | ${e.company}`} date={`${e.startDate} – ${e.endDate}`} />
+                {(e.tailoredBullets || e.bullets || []).map((b, j) => <Bullet key={j} text={b} />)}
+              </div>
+            ))}
+          </>}
+
+          {education.length > 0 && <><SH t="EDUCATION" />
+            {education.map((ed, i) => (
+              <div key={i} style={{ marginBottom: 4 }}>
+                <EntryHeader left={`${ed.degree} | ${ed.institution}`} date={`${ed.startDate} – ${ed.endDate}`} />
+                {ed.extra && <div style={{ fontSize: 7.5, color: "#333", marginTop: 1 }}>{ed.extra}</div>}
+                {ed.notes && <div style={{ fontSize: 7.5, color: "#555", lineHeight: 1.4, marginTop: 1 }}>{ed.notes}</div>}
+              </div>
+            ))}
+          </>}
+        </div>
       </div>
-      {summary && <><SH t="PROFILE" /><p style={{ margin: 0, fontSize: 10.5, lineHeight: 1.6 }}>{summary}</p></>}
-      {skillCats.length > 0 && <><SH t="TECHNICAL SKILLS" />{skillCats.map((c, i) => <div key={i} style={{ display: "flex", gap: 8, marginBottom: 3 }}><span style={{ fontWeight: 700, minWidth: 90, fontSize: 10.5 }}>{c.category}</span><span style={{ fontSize: 10.5 }}>{(c.skills || []).join(", ")}</span></div>)}</>}
-      {projects.length > 0 && <><SH t="KEY PROJECTS" />{projects.map((p, i) => <div key={i} style={{ marginBottom: 8 }}><div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ fontWeight: 700, fontSize: 10.5 }}>{[p.role, p.name].filter(Boolean).join(" | ")}</span><span style={{ fontSize: 9.5, color: "#555" }}>{[p.startDate, p.endDate].filter(Boolean).join(" – ")}</span></div>{(p.tailoredBullets || p.bullets || []).map((b, j) => <div key={j} style={{ paddingLeft: 10, fontSize: 10, color: "#222", marginTop: 2, lineHeight: 1.5 }}>• {b}</div>)}</div>)}</>}
-      {experience.length > 0 && <><SH t="PROFESSIONAL EXPERIENCE" />{experience.map((e, i) => <div key={i} style={{ marginBottom: 8 }}><div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ fontWeight: 700, fontSize: 10.5 }}>{e.role} | {e.company}</span><span style={{ fontSize: 9.5, color: "#555" }}>{e.startDate} – {e.endDate}</span></div>{(e.tailoredBullets || e.bullets || []).map((b, j) => <div key={j} style={{ paddingLeft: 10, fontSize: 10, color: "#222", marginTop: 2, lineHeight: 1.5 }}>• {b}</div>)}</div>)}</>}
-      {education.length > 0 && <><SH t="EDUCATION" />{education.map((ed, i) => <div key={i} style={{ marginBottom: 6 }}><div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ fontWeight: 700, fontSize: 10.5 }}>{ed.degree} | {ed.institution}</span><span style={{ fontSize: 9.5, color: "#555" }}>{ed.startDate} – {ed.endDate}</span></div>{ed.extra && <div style={{ fontSize: 10, color: "#333" }}>{ed.extra}</div>}{ed.notes && <div style={{ fontSize: 9.5, color: "#555" }}>{ed.notes}</div>}</div>)}</>}
+      {overflow && (
+        <div style={{ marginTop: 10, padding: "10px 14px", background: "#1c1000", border: "1px solid #f59e0b55", borderRadius: 8, fontSize: 12, color: "#f59e0b" }}>
+          Content overflows 1 page — trim some bullets in Edit Profile, or reduce to 3 bullets per project.
+        </div>
+      )}
     </div>
   );
 }
@@ -227,6 +405,7 @@ function ProfileForm({ profile, setProfile }) {
         ))}
       </div>
       <label {...lbl}>LinkedIn</label><input {...inp()} value={profile.linkedin||""} onChange={e=>up("linkedin",e.target.value)} />
+      <label {...lbl}>Portfolio URL</label><input {...inp()} value={profile.portfolio||""} onChange={e=>up("portfolio",e.target.value)} placeholder="yoursite.com" />
 
       <SH t="Profile summary" />
       <textarea {...inp()} style={{ width:"100%", boxSizing:"border-box", background:C.surface, border:`1px solid ${C.border}`, color:C.textPrimary, borderRadius:7, padding:"9px 12px", fontSize:13, minHeight:90, resize:"vertical" }} value={profile.summary||""} onChange={e=>up("summary",e.target.value)} />
@@ -311,7 +490,10 @@ export default function SmartCV() {
   const [profiles, setProfiles] = useState(() => {
     try {
       const saved = localStorage.getItem("smartcv_profiles");
-      return saved ? JSON.parse(saved) : [{ id: "default", label: "Surya – Data Science", data: YOUR_PROFILE }];
+      if (!saved) return [{ id: "default", label: "Surya – Data Science", data: YOUR_PROFILE }];
+      const parsed = JSON.parse(saved);
+      // Migrate: fill in any missing top-level fields from YOUR_PROFILE for the default profile
+      return parsed.map(p => p.id === "default" ? { ...p, data: { ...YOUR_PROFILE, ...p.data } } : p);
     } catch { return [{ id: "default", label: "Surya – Data Science", data: YOUR_PROFILE }]; }
   });
 
@@ -341,7 +523,7 @@ export default function SmartCV() {
   const addProfile = () => {
     const id = `profile_${Date.now()}`;
     const label = `New Profile ${profiles.length + 1}`;
-    const newProfile = { id, label, data: { name: "", email: "", phone: "", location: "", linkedin: "", summary: "", skillCategories: [], projects: [], experience: [], education: [] } };
+    const newProfile = { id, label, data: { name: "", email: "", phone: "", location: "", linkedin: "", portfolio: "", summary: "", skillCategories: [], projects: [], experience: [], education: [] } };
     const next = [...profiles, newProfile];
     setProfiles(next);
     localStorage.setItem("smartcv_profiles", JSON.stringify(next));
@@ -367,25 +549,91 @@ export default function SmartCV() {
     localStorage.setItem("smartcv_profiles", JSON.stringify(next));
   };
 
-  const [screen, setScreen]           = useState("home");
-  const [jd, setJd]                   = useState("");
-  const [loadingStep, setLoadingStep] = useState(0);
+  const [screen, setScreen]             = useState("home");
+  const [jd, setJd]                     = useState("");
   const [iterationMsg, setIterationMsg] = useState("");
-  const [result, setResult]           = useState(null);
-  const [error, setError]             = useState(null);
-  const [resultTab, setResultTab]     = useState("scores");
-  const [showPreview, setShowPreview] = useState(false);
-  const [downloading, setDownloading] = useState(false);
+  const [result, setResult]             = useState(null);
+  const [editedTailored, setEditedTailored] = useState(null);
+  const [error, setError]               = useState(null);
+  const [resultTab, setResultTab]       = useState("scores");
+  const [showPreview, setShowPreview]   = useState(false);
+  const [downloading, setDownloading]   = useState(false);
   const [showProfilePicker, setShowProfilePicker] = useState(false);
   const [editingLabel, setEditingLabel] = useState(null);
+  const [addedKws, setAddedKws]         = useState(new Set());
   const apiKey = import.meta.env.VITE_OPENAI_KEY;
 
   useEffect(() => {
-    let iv;
-    if (screen === "loading") { iv = setInterval(() => setLoadingStep(s => Math.min(s+1, LOADING_MSGS.length-1)), 1400); }
-    else { setLoadingStep(0); }
-    return () => clearInterval(iv);
-  }, [screen]);
+    if (result) { setEditedTailored(JSON.parse(JSON.stringify(result.tailored))); setAddedKws(new Set()); }
+  }, [result]);
+
+  const liveScore = editedTailored && jd ? computeATSScore(profile, jd, true, editedTailored) : result?.postScore;
+
+  const [placingKw, setPlacingKw] = useState(null);
+  const [kwToast, setKwToast] = useState(null);
+
+  const placeKeywordWithAI = async (kw) => {
+    if (addedKws.has(kw) || placingKw) return;
+    setPlacingKw(kw);
+    try {
+      const t = editedTailored || result.tailored;
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+        body: JSON.stringify({
+          model: OPENAI_MODEL,
+          max_completion_tokens: 400,
+          response_format: { type: "json_object" },
+          messages: [
+            { role: "system", content: `You are a CV editor. Given a CV and a missing keyword from a job description, determine where this keyword genuinely fits in the CV. Return ONLY valid JSON with exactly one of these shapes:
+{"placement":"skills","skillCategory":"exact existing category name or new one","skillToAdd":"keyword as it should appear in a skills list"}
+{"placement":"bullet","section":"projects","entryName":"exact project name","bulletIndex":0,"rewrittenBullet":"rewritten bullet naturally including the keyword, max 120 chars"}
+{"placement":"bullet","section":"experience","entryName":"exact company name","bulletIndex":0,"rewrittenBullet":"rewritten bullet naturally including the keyword, max 120 chars"}
+{"placement":"summary","newSummary":"rewritten 2-sentence profile summary naturally including the keyword"}
+{"placement":"none","reason":"why this keyword doesn't fit anywhere in this CV"}
+
+RULES: Location names (cities, countries) and soft/generic phrases MUST go into summary or bullets, NEVER skills. Only add to skills if the keyword is a genuine technical tool, language, framework, or methodology.` },
+            { role: "user", content: `KEYWORD: "${kw}"\n\nCV:\n${JSON.stringify(t, null, 2)}\n\nJD EXCERPT:\n${jd.slice(0, 600)}` }
+          ]
+        })
+      });
+      const data = await res.json();
+      const suggestion = JSON.parse(data.choices?.[0]?.message?.content || "{}");
+
+      if (suggestion.placement === "none") {
+        setKwToast({ msg: `"${kw}" doesn't fit this CV — ${suggestion.reason}`, ok: false });
+      } else {
+        setEditedTailored(prev => {
+          const next = JSON.parse(JSON.stringify(prev));
+          if (suggestion.placement === "skills") {
+            const cats = next.reorderedSkillCategories || [];
+            const cat = cats.find(c => c.category === suggestion.skillCategory);
+            if (cat) { if (!cat.skills.includes(suggestion.skillToAdd)) cat.skills.push(suggestion.skillToAdd); }
+            else cats.push({ category: suggestion.skillCategory || "Additional", skills: [suggestion.skillToAdd] });
+            next.reorderedSkillCategories = cats;
+          } else if (suggestion.placement === "bullet") {
+            const entries = suggestion.section === "projects" ? next.reorderedProjects : next.reorderedExperience;
+            const entry = entries?.find(e => (e.name || e.company) === suggestion.entryName);
+            if (entry) {
+              if (!entry.tailoredBullets) entry.tailoredBullets = [...(entry.bullets || [])];
+              if (suggestion.bulletIndex < entry.tailoredBullets.length) entry.tailoredBullets[suggestion.bulletIndex] = suggestion.rewrittenBullet;
+            }
+          } else if (suggestion.placement === "summary") {
+            next.tailoredSummary = suggestion.newSummary;
+          }
+          return next;
+        });
+        const placeLabel = suggestion.placement === "skills" ? `Skills › ${suggestion.skillCategory}` : suggestion.placement === "bullet" ? `${suggestion.section} › ${suggestion.entryName}` : "Profile summary";
+        setKwToast({ msg: `"${kw}" added to ${placeLabel}`, ok: true });
+        setAddedKws(prev => new Set([...prev, kw]));
+      }
+    } catch(e) {
+      setKwToast({ msg: "Placement failed — try again", ok: false });
+    } finally {
+      setPlacingKw(null);
+      setTimeout(() => setKwToast(null), 3500);
+    }
+  };
 
   const tailorCV = async () => {
     if (!jd.trim()) { setError("Please paste a job description."); return; }
@@ -395,33 +643,35 @@ export default function SmartCV() {
 
     const preScore = computeATSScore(profile, jd, false, {});
 
-    const buildPrompt = (attempt, previousScore, feedback) => `You are a professional CV tailoring assistant.
+    const buildPrompt = (attempt, previousScore, feedback, missingKeywords) => `You are a professional CV tailoring assistant. Your job is to rewrite CV bullet points to match the job description, WITHOUT inventing facts.
 
-STRICT RULES:
-- NEVER invent experience, roles, companies, dates, or qualifications
-- Rephrase bullets to naturally include JD keywords — keep all facts 100% identical
-- Reorder projects and experience most relevant first  
-- Keep writing SHORT, DIRECT, SPECIFIC — no buzzwords
-- CRITICAL: preserve ALL numbers, metrics, and technical terms from original bullets — never remove them
-- If a bullet already matches well, change it minimally or not at all
-- Summary: max 2 sentences, factual, direct
-- changedBullets: only include bullets where text actually changed
+RULES:
+- NEVER invent roles, companies, dates, or qualifications
+- Facts must stay true — but WORDING must change to match the JD
+- You MUST rewrite bullet text. Do NOT copy bullets verbatim from the input — every project and experience entry must have genuinely rewritten tailoredBullets
+- Expand implied technologies into their real names: if the profile says "frontend framework" and they used Vue.js, write "Vue.js". If they used FastAPI, write "FastAPI". If they used PostgreSQL, write "PostgreSQL". Be specific
+- If a technology abbreviation can expand safely (e.g. "JavaScript" can replace "JS", "Python" is implied by scikit-learn usage), expand it
+- Preserve ALL numbers and metrics — never remove them
+- Reorder projects and experience most relevant first
+- tailoredSummary: 2 sentences, factual, dense with JD keywords
+- Each bullet MUST be under 120 characters. Max 4 bullets per project or experience entry
+- reorderedSkillCategories: only genuine technical tools, languages, frameworks, and methodologies — NEVER add location names, city names, soft skills, generic phrases, or job-role terms to skill lists
+- CRITICAL: Never drop keywords that are already in the original CV and match the JD — every rewritten bullet must preserve all existing matched terms, only adding new ones on top
 - Return ONLY valid JSON
-${attempt > 1 ? `\nThis is attempt ${attempt}/3. Previous ATS score was ${previousScore}/100. ${feedback} Focus on adding more JD keywords naturally into the bullets without removing existing specific terms.` : ""}
+${attempt > 1 ? `\nAttempt ${attempt}/3. Previous ATS score: ${previousScore}/100. ${feedback}` : ""}
+${missingKeywords.length > 0 ? `\nMISSING JD KEYWORDS — not yet in CV. Work as many as genuinely applicable into the bullet rewrites:\n${missingKeywords.slice(0, 25).join(", ")}` : ""}
 
-Return exactly:
+Return exactly this JSON (bullets first so nothing important gets cut off):
 {
-  "jobSummary": "3-4 sentence plain-English summary of what this role needs. Include location and salary if mentioned.",
-  "visaRequirement": "exact visa/work rights text from JD, or null",
-  "tailoredSummary": "2 sentence max, factual, direct, uses JD keywords",
+  "tailoredSummary": "2 sentence max, factual, dense with JD keywords",
   "reorderedSkillCategories": [...same categories reordered by JD relevance, skills reordered within],
-  "reorderedProjects": [...reordered, each must have tailoredBullets preserving all numbers and technical terms],
-  "reorderedExperience": [...reordered, each must have tailoredBullets preserving all numbers and technical terms],
-  "changedBullets": [{"section":"Projects or Experience","role":"exact role or project name","original":"exact original bullet","tailored":"new bullet"}],
+  "reorderedProjects": [...reordered most-relevant first, each with tailoredBullets array — REWRITE every bullet, max 4 per project, max 120 chars each],
+  "reorderedExperience": [...reordered most-relevant first, each with tailoredBullets array — REWRITE every bullet, max 4 per entry, max 120 chars each],
+  "jobSummary": "3-4 sentence plain-English summary of what this role needs",
+  "visaRequirement": "exact visa/work rights text from JD, or null",
   "gapAnalysis": {
     "technologies": ["tool in JD candidate doesn't have"],
     "experience": ["experience type in JD candidate lacks"],
-    "visaRequirement": "visa text or null",
     "overallFit": "1 sentence honest fit assessment"
   },
   "tailoringSummary": "1-2 sentences on what was changed and why"
@@ -432,7 +682,7 @@ Return exactly:
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
         body: JSON.stringify({
-          model: OPENAI_MODEL, max_completion_tokens: 2500,
+          model: OPENAI_MODEL, max_completion_tokens: 4096,
           response_format: { type: "json_object" },
           messages: [
             { role: "system", content: prompt },
@@ -451,16 +701,31 @@ Return exactly:
       let bestScore = preScore;
       let lastScore = preScore;
       let attempts = 0;
+      // Build a profile-like object from tailored output so retry 2+ refine the previous version
+      const tailoredToProfile = (t) => ({
+        ...profile,
+        summary: t.tailoredSummary || profile.summary,
+        skillCategories: t.reorderedSkillCategories || profile.skillCategories,
+        projects: (t.reorderedProjects || profile.projects).map(p => ({ ...p, bullets: p.tailoredBullets || p.bullets })),
+        experience: (t.reorderedExperience || profile.experience).map(e => ({ ...e, bullets: e.tailoredBullets || e.bullets })),
+      });
 
       while (attempts < MAX_ATTEMPTS) {
         attempts++;
-        setIterationMsg(`Tailoring CV — attempt ${attempts} of ${MAX_ATTEMPTS}...`);
+        const passLabel = ["Keyword injection", "Quantifying achievements", "Structural polish"][attempts - 1];
+        setIterationMsg(`Pass ${attempts} of ${MAX_ATTEMPTS}: ${passLabel}...`);
+
+        // For retries, compute which keywords are still missing from the previous best
+        const currentBase = bestTailored ? tailoredToProfile(bestTailored) : profile;
+        const currentMissing = extractJDKeywords(jd).filter(kw =>
+          !profileToText(currentBase, false, {}).toLowerCase().includes(kw)
+        );
 
         const feedback = attempts > 1
-          ? `Score was ${lastScore.keywordScore}% keyword match. Try incorporating more of these JD keywords into bullets naturally.`
+          ? `Still missing ${currentMissing.length} JD keywords. Be more aggressive — rewrite bullets to explicitly name technologies and include the missing keywords listed below.`
           : "";
 
-        const tailored = await callAI(buildPrompt(attempts, lastScore.finalScore, feedback), profile);
+        const tailored = await callAI(buildPrompt(attempts, lastScore.finalScore, feedback, currentMissing), currentBase);
         const scored = computeATSScore(profile, jd, true, tailored);
 
         setIterationMsg(`Attempt ${attempts}: scored ${scored.finalScore}/100 (was ${preScore.finalScore})...`);
@@ -471,10 +736,8 @@ Return exactly:
           bestScore = scored;
           setIterationMsg(`Score improved to ${scored.finalScore} — keeping this version...`);
           await new Promise(r => setTimeout(r, 500));
-          // If we've improved, we can stop early if score is already good
-          if (scored.finalScore >= preScore.finalScore + 10) break;
+          if (scored.finalScore >= preScore.finalScore + 15) break;
         } else if (bestTailored === null) {
-          // Keep first attempt as fallback even if no improvement
           bestTailored = tailored;
         }
 
@@ -501,37 +764,102 @@ Return exactly:
   const downloadDocx = async () => {
     setDownloading(true);
     try {
-      const res = await fetch("http://localhost:7821/generate", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profile, tailored: result.tailored })
-      });
-      if (!res.ok) throw new Error("Server returned " + res.status);
-      const blob = await res.blob();
+      const t = editedTailored || result.tailored;
+      const summary    = t.tailoredSummary    || profile.summary || "";
+      const skillCats  = t.reorderedSkillCategories || profile.skillCategories || [];
+      const projects   = t.reorderedProjects   || profile.projects   || [];
+      const experience = t.reorderedExperience || profile.experience || [];
+      const education  = profile.education || [];
+
+      // docx sizes are in half-points: 22 = 11pt (standard CV body), 20 = 10pt, 24 = 12pt
+      const SZ = { name: 36, contact: 20, heading: 20, body: 22, small: 20 };
+      const rule = () => new Paragraph({ border: { bottom: { style: "single", size: 6, color: "2563EB" } }, spacing: { after: 100 } });
+      const sh = (text) => [
+        new Paragraph({ children: [new TextRun({ text, bold: true, size: SZ.heading, color: "2563EB", allCaps: true })], spacing: { before: 220, after: 0 } }),
+        rule(),
+      ];
+      const bul = (text) => new Paragraph({ children: [new TextRun({ text, size: SZ.body })], bullet: { level: 0 }, spacing: { after: 60 } });
+
+      const children = [
+        new Paragraph({ children: [new TextRun({ text: profile.name, bold: true, size: SZ.name, color: "1e3a5f" })], alignment: AlignmentType.CENTER, spacing: { after: 80 } }),
+        new Paragraph({ children: [new TextRun({ text: [profile.location, profile.email, profile.phone, profile.linkedin, profile.portfolio].filter(Boolean).join("  |  "), size: SZ.contact, color: "444444" })], alignment: AlignmentType.CENTER, spacing: { after: 160 } }),
+      ];
+
+      if (summary) {
+        children.push(...sh("PROFILE"));
+        children.push(new Paragraph({ children: [new TextRun({ text: summary, size: SZ.body })], spacing: { after: 100 } }));
+      }
+      if (skillCats.length) {
+        children.push(...sh("TECHNICAL SKILLS"));
+        skillCats.forEach(c => children.push(new Paragraph({
+          children: [new TextRun({ text: c.category + ": ", bold: true, size: SZ.body }), new TextRun({ text: (c.skills||[]).join(", "), size: SZ.body })],
+          spacing: { after: 70 }
+        })));
+      }
+      if (projects.length) {
+        children.push(...sh("KEY PROJECTS"));
+        projects.forEach(p => {
+          const dates = [p.startDate, p.endDate].filter(Boolean).join(" – ");
+          children.push(new Paragraph({
+            children: [new TextRun({ text: [p.role, p.name].filter(Boolean).join(" | "), bold: true, size: SZ.body }), ...(dates ? [new TextRun({ text: "   " + dates, size: SZ.small, color: "555555" })] : [])],
+            spacing: { before: 100, after: 60 }
+          }));
+          (p.tailoredBullets || p.bullets || []).forEach(b => children.push(bul(b)));
+        });
+      }
+      if (experience.length) {
+        children.push(...sh("PROFESSIONAL EXPERIENCE"));
+        experience.forEach(e => {
+          children.push(new Paragraph({
+            children: [new TextRun({ text: `${e.role} | ${e.company}`, bold: true, size: SZ.body }), new TextRun({ text: `   ${e.startDate} – ${e.endDate}`, size: SZ.small, color: "555555" })],
+            spacing: { before: 100, after: 60 }
+          }));
+          (e.tailoredBullets || e.bullets || []).forEach(b => children.push(bul(b)));
+        });
+      }
+      if (education.length) {
+        children.push(...sh("EDUCATION"));
+        education.forEach(ed => {
+          children.push(new Paragraph({
+            children: [new TextRun({ text: `${ed.degree} | ${ed.institution}`, bold: true, size: SZ.body }), new TextRun({ text: `   ${ed.startDate} – ${ed.endDate}`, size: SZ.small, color: "555555" })],
+            spacing: { before: 100, after: 60 }
+          }));
+          if (ed.extra) children.push(new Paragraph({ children: [new TextRun({ text: ed.extra, size: SZ.small, color: "333333" })], spacing: { after: 40 } }));
+          if (ed.notes) children.push(new Paragraph({ children: [new TextRun({ text: ed.notes, size: SZ.small, color: "555555" })], spacing: { after: 60 } }));
+        });
+      }
+
+      const doc = new Document({ sections: [{ properties: { page: { margin: { top: 860, right: 900, bottom: 860, left: 900 } } }, children }] });
+      const blob = await Packer.toBlob(doc);
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a"); a.href=url; a.download="SmartCV_Tailored.docx"; a.click();
+      const a = document.createElement("a"); a.href = url; a.download = "SmartCV_Tailored.docx"; a.click();
       URL.revokeObjectURL(url);
-    } catch(e) { alert("Run python3 docx_server.py first.\n\n" + e.message); }
+    } catch(e) { alert("DOCX error: " + e.message); }
     finally { setDownloading(false); }
   };
 
   // ── SHARED STYLES ────────────────────────────────────────────────────────
-  const card = { background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: "20px 22px" };
+  const card = { background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: "20px 22px", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.04)" };
   const primaryBtn = { padding: "13px 24px", fontWeight: 700, fontSize: 14, background: GRAD, border: "none", borderRadius: 10, color: "white", cursor: "pointer" };
-  const ghostBtn   = { padding: "13px 20px", fontWeight: 600, fontSize: 14, background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, color: C.textSecondary, cursor: "pointer" };
+  const ghostBtn   = { padding: "13px 20px", fontWeight: 600, fontSize: 14, background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, color: C.textSecondary, cursor: "pointer", transition: "all 0.15s" };
 
-  const improvement = result ? result.postScore.finalScore - result.preScore.finalScore : 0;
+  const liveImprovement = result ? ((liveScore?.finalScore ?? result.postScore.finalScore) - result.preScore.finalScore) : 0;
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, color: C.textPrimary, fontFamily: "system-ui, -apple-system, sans-serif" }}>
       <style>{`
-        @keyframes fadeUp  { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes fadeUp  { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
         @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
         @keyframes spin    { to{transform:rotate(360deg)} }
+        @keyframes scan    { 0%{top:0%} 50%{top:calc(100% - 3px)} 100%{top:0%} }
         * { box-sizing:border-box; margin:0; padding:0; }
         textarea, input { outline:none; font-family:inherit; }
         textarea:focus, input:focus { border-color:${C.blue} !important; box-shadow:0 0 0 3px ${C.blue}22; }
         button { font-family:inherit; }
-        ::-webkit-scrollbar{width:5px} ::-webkit-scrollbar-track{background:${C.bg}} ::-webkit-scrollbar-thumb{background:${C.border};border-radius:3px}
+        ::-webkit-scrollbar{width:5px} ::-webkit-scrollbar-track{background:${C.surface}} ::-webkit-scrollbar-thumb{background:${C.border};border-radius:3px}
+        .kw-pill { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+        .kw-pill:hover { transform: scale(1.05); box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+        .ghost-btn:hover { background: ${C.surface} !important; border-color: ${C.textMuted} !important; }
       `}</style>
 
       {/* ── NAV ── */}
@@ -577,7 +905,7 @@ Return exactly:
           </div>
 
           <button onClick={()=>setScreen(screen==="profile"?"home":"profile")}
-            style={{ padding:"9px 22px", fontSize:14, fontWeight:600, background: screen==="profile" ? GRAD : C.card, border:`1px solid ${screen==="profile" ? "transparent" : C.border}`, borderRadius:10, color:"white", cursor:"pointer", transition:"all 0.2s" }}>
+            style={{ padding:"9px 22px", fontSize:14, fontWeight:600, background: screen==="profile" ? GRAD : C.card, border:`1px solid ${screen==="profile" ? "transparent" : C.border}`, borderRadius:10, color: screen==="profile" ? "white" : C.textPrimary, cursor:"pointer", transition:"all 0.2s" }}>
             {screen === "profile" ? "Done" : "Edit profile"}
           </button>
         </div>
@@ -627,36 +955,65 @@ Return exactly:
 
       {/* ── LOADING ── */}
       {screen === "loading" && (
-        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", minHeight:"65vh", animation:"fadeIn 0.3s ease" }}>
-          <div style={{ width:56, height:56, border:`3px solid ${C.border}`, borderTop:`3px solid ${C.blue}`, borderRadius:"50%", animation:"spin 0.75s linear infinite", marginBottom:32 }} />
-          <div key={iterationMsg} style={{ fontSize:16, fontWeight:600, color:C.textPrimary, marginBottom:10, animation:"fadeIn 0.3s ease", textAlign:"center", maxWidth:320 }}>{iterationMsg}</div>
-          <div style={{ display:"flex", gap:6, marginTop:16 }}>
-            {[0,1,2].map(i => (
-              <div key={i} style={{ width:7, height:7, borderRadius:"50%", background: iterationMsg.includes(`${i+1} of 3`) || iterationMsg.includes(`Attempt ${i+1}`) ? C.blue : C.border, transition:"background 0.3s" }} />
-            ))}
+        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", minHeight:"70vh", padding:"40px 32px", animation:"fadeIn 0.3s ease" }}>
+          {/* A4 skeleton with scanning laser */}
+          <div style={{ position:"relative", width:180, borderRadius:6, background:C.surface, border:`1px solid ${C.border}`, boxShadow:"0 8px 40px #00000070", overflow:"hidden", marginBottom:28 }}>
+            <div style={{ paddingBottom:"141.43%", position:"relative" }}>
+              <div style={{ position:"absolute", inset:0, padding:"12px 14px", display:"flex", flexDirection:"column", gap:0 }}>
+                {/* name block */}
+                <div style={{ height:8, width:"60%", background:C.blueBorder, borderRadius:3, margin:"0 auto 6px" }} />
+                <div style={{ height:4, width:"80%", background:C.border, borderRadius:2, margin:"0 auto 10px" }} />
+                {/* section blocks */}
+                {[["40%",true],[100],[85],[70],[100,true],[95],[80],[60],[100,true],[90],[75],[65],[85],[100,true],[80],[70]].map(([w,isHead],i)=>(
+                  <div key={i} style={{ height: isHead ? 5 : 3, width:w, background: isHead ? "#1e3a5f" : C.border, borderRadius:2, marginBottom: isHead ? 5 : 3 }} />
+                ))}
+              </div>
+              {/* scanning gradient line */}
+              <div style={{ position:"absolute", left:0, right:0, height:3, background:`linear-gradient(90deg, transparent 0%, ${C.blue} 30%, ${C.purple} 70%, transparent 100%)`, animation:"scan 1.6s ease-in-out infinite", opacity:0.85 }} />
+            </div>
           </div>
+
+          {/* Pass dots */}
+          <div style={{ display:"flex", gap:8, marginBottom:14 }}>
+            {[1,2,3].map(i => {
+              const passNum = parseInt((iterationMsg.match(/Pass (\d)/) || [])[1] || "0");
+              const active = passNum === i;
+              const done   = passNum > i;
+              return <div key={i} style={{ width:8, height:8, borderRadius:"50%", background: done ? C.green : active ? C.blue : C.border, transition:"background 0.4s", boxShadow: active ? `0 0 8px ${C.blue}88` : "none" }} />;
+            })}
+          </div>
+          <div key={iterationMsg} style={{ fontSize:14, fontWeight:600, color:C.textPrimary, animation:"fadeIn 0.3s ease", textAlign:"center", maxWidth:300, lineHeight:1.5 }}>{iterationMsg}</div>
         </div>
       )}
 
       {/* ── RESULTS ── */}
       {screen === "results" && result && (
         <div style={{ maxWidth:860, margin:"0 auto", padding:"28px 32px 60px", animation:"fadeIn 0.4s ease" }}>
+          {kwToast && (
+            <div style={{ position:"sticky", top:70, zIndex:300, marginBottom:16, padding:"10px 18px", borderRadius:10, fontSize:13, fontWeight:600, background: kwToast.ok ? C.greenBg : C.redBg, color: kwToast.ok ? C.green : C.red, border:`1px solid ${kwToast.ok ? C.greenBorder : "#fca5a5"}`, boxShadow:"0 4px 16px #0000001a", animation:"fadeUp 0.25s ease" }}>
+              {kwToast.msg}
+            </div>
+          )}
+
+          {/* Top row: reset + tabs */}
+          <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
+            <button onClick={() => { setScreen("home"); setResult(null); setJd(""); setEditedTailored(null); setAddedKws(new Set()); }}
+              style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 16px", fontSize:13, fontWeight:600, background:C.card, border:`1px solid ${C.border}`, borderRadius:10, color:C.textSecondary, cursor:"pointer", whiteSpace:"nowrap", flexShrink:0 }}>
+              ↩ New application
+            </button>
+          </div>
 
           {/* Tab switcher */}
           <div style={{ display:"flex", gap:3, marginBottom:28, background:C.card, borderRadius:12, padding:4, border:`1px solid ${C.border}` }}>
-            {[
-              ["scores",  "Scores",   C.blue],
-              ["insights","Insights", C.purple],
-              ["changes", "Changes",  C.teal]
-            ].map(([t,l,accent])=>(
+            {[["scores","Scores"],["insights","Insights"],["changes","Changes"]].map(([t,l])=>(
               <button key={t} onClick={()=>setResultTab(t)}
                 style={{
                   flex:1, padding:"10px 0", fontSize:13, fontWeight: resultTab===t ? 700 : 400,
-                  background: resultTab===t ? `${accent}22` : "transparent",
-                  border: resultTab===t ? `1px solid ${accent}55` : "1px solid transparent",
-                  borderRadius:9, color: resultTab===t ? accent : C.textSecondary,
+                  background: resultTab===t ? `${C.blue}22` : "transparent",
+                  border: resultTab===t ? `1px solid ${C.blue}55` : "1px solid transparent",
+                  borderRadius:9, color: resultTab===t ? C.blue : C.textSecondary,
                   cursor:"pointer", transition:"all 0.2s",
-                  boxShadow: resultTab===t ? `0 0 12px ${accent}22` : "none"
+                  boxShadow: resultTab===t ? `0 0 12px ${C.blue}22` : "none"
                 }}>{l}</button>
             ))}
           </div>
@@ -665,33 +1022,60 @@ Return exactly:
           {resultTab === "scores" && (
             <div style={{ animation:"fadeUp 0.35s ease" }}>
               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, marginBottom:24 }}>
-                {[{label:"Before",score:result.preScore.finalScore,sub:"Original CV"},{label:"After",score:result.postScore.finalScore,sub:"Tailored CV"}].map(({label,score,sub})=>(
+                {[
+                  {label:"Before", score:result.preScore.finalScore,                        sub:"Original CV"},
+                  {label:"After",  score:liveScore?.finalScore ?? result.postScore.finalScore, sub:"Tailored CV", live:true},
+                ].map(({label,score,sub,live})=>(
                   <div key={label} style={{ ...card, display:"flex", flexDirection:"column", alignItems:"center", padding:"24px 16px" }}>
-                    <div style={{ fontSize:11, color:C.textSecondary, marginBottom:12, textTransform:"uppercase", letterSpacing:"0.1em" }}>{label}</div>
-                    <AnimatedScore target={score} />
+                    <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:12 }}>
+                      <span style={{ fontSize:11, color:C.textSecondary, textTransform:"uppercase", letterSpacing:"0.1em" }}>{label}</span>
+                      {live && <span style={{ fontSize:9, color:C.blueDark, background:C.blueFaded, border:`1px solid ${C.blueBorder}`, borderRadius:10, padding:"1px 6px" }}>LIVE</span>}
+                    </div>
+                    <AnimatedScore target={score} key={score} />
                     <div style={{ fontSize:12, color:C.textSecondary, marginTop:10 }}>{sub}</div>
                   </div>
                 ))}
               </div>
 
-              {improvement > 0 && (
-                <div style={{ background:"#052e16", border:`1px solid #065f46`, borderRadius:12, padding:"14px 18px", marginBottom:20, animation:"fadeUp 0.4s ease 0.3s both" }}>
-                  <div style={{ fontSize:15, fontWeight:700, color:C.green }}>+{improvement} point improvement</div>
-                  <div style={{ fontSize:13, color:"#6ee7b7", marginTop:2 }}>Best version found after {result.attempts} attempt{result.attempts!==1?"s":""}.</div>
+              {liveImprovement > 0 && (
+                <div style={{ background:C.greenBg, border:`1px solid ${C.greenBorder}`, borderRadius:12, padding:"14px 18px", marginBottom:20, animation:"fadeUp 0.4s ease 0.3s both" }}>
+                  <div style={{ fontSize:15, fontWeight:700, color:C.green }}>+{liveImprovement} point improvement</div>
+                  <div style={{ fontSize:13, color:C.green, marginTop:2, opacity:0.8 }}>Best version found after {result.attempts} attempt{result.attempts!==1?"s":""}.</div>
                 </div>
               )}
-              {improvement === 0 && (
-                <div style={{ background:"#0c1a2e", border:`1px solid #1e3a5f`, borderRadius:12, padding:"14px 18px", marginBottom:20, animation:"fadeUp 0.4s ease 0.3s both" }}>
-                  <div style={{ fontSize:14, color:"#93c5fd" }}>CV was already well-matched — best reordering applied after {result.attempts} attempt{result.attempts!==1?"s":""}.</div>
+              {liveImprovement === 0 && (
+                <div style={{ background:C.blueFaded, border:`1px solid ${C.blueBorder}`, borderRadius:12, padding:"14px 18px", marginBottom:20, animation:"fadeUp 0.4s ease 0.3s both" }}>
+                  <div style={{ fontSize:14, color:C.blueText }}>CV was already well-matched — best reordering applied after {result.attempts} attempt{result.attempts!==1?"s":""}.</div>
+                </div>
+              )}
+              {liveImprovement < 0 && (
+                <div style={{ background:C.redBg, border:`1px solid #fca5a5`, borderRadius:12, padding:"14px 18px", marginBottom:20, animation:"fadeUp 0.4s ease 0.3s both" }}>
+                  <div style={{ fontSize:15, fontWeight:700, color:C.red }}>{liveImprovement} points — tailored CV lost some keyword coverage</div>
+                  <div style={{ fontSize:13, color:C.red, marginTop:2, opacity:0.8 }}>Try clicking missing keyword pills below to recover the score.</div>
                 </div>
               )}
 
               <div style={{ ...card, marginBottom:20 }}>
-                <div style={{ fontSize:12, fontWeight:700, color:C.textSecondary, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:18 }}>Score breakdown</div>
-                <ScoreBar label="Keyword match (55%)" value={result.postScore.keywordScore} color={C.blue} />
-                <ScoreBar label="CV structure (25%)"  value={result.postScore.structScore}  color={C.teal} />
-                <ScoreBar label="Quantified achievements (20%)" value={result.postScore.quantScore} color={C.amber} />
-                <div style={{ fontSize:12, color:C.textSecondary, marginTop:12 }}>{result.postScore.matchedCount} of {result.postScore.totalKeywords} keywords matched</div>
+                <div style={{ fontSize:12, fontWeight:700, color:C.textSecondary, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:4 }}>Score breakdown</div>
+                <div style={{ display:"flex", justifyContent:"flex-end", gap:20, fontSize:11, color:C.textMuted, marginBottom:12 }}>
+                  <span>Before</span><span style={{ color:C.blue }}>After</span>
+                </div>
+                {[
+                  { label:"Keyword match (55%)", before: result.preScore.keywordScore,  after: liveScore?.keywordScore ?? result.postScore.keywordScore,  color:C.blue },
+                  { label:"CV structure (25%)",  before: result.preScore.structScore,   after: liveScore?.structScore  ?? result.postScore.structScore,   color:BAR_COLORS.structure },
+                  { label:"Quantified achievements (20%)", before: result.preScore.quantScore, after: liveScore?.quantScore ?? result.postScore.quantScore, color:BAR_COLORS.quant },
+                ].map(({label, before, after, color}) => (
+                  <div key={label} style={{ marginBottom:14 }}>
+                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:5 }}>
+                      <span style={{ fontSize:12, color:C.textSecondary }}>{label}</span>
+                      <span style={{ fontSize:12, fontWeight:600, color: after >= before ? C.green : C.red }}>{before} → {after}</span>
+                    </div>
+                    <div style={{ height:7, borderRadius:4, background:C.surface, overflow:"hidden" }}>
+                      <div style={{ height:"100%", borderRadius:4, width:`${after}%`, background:color, transition:"width 0.6s ease" }} />
+                    </div>
+                  </div>
+                ))}
+                <div style={{ fontSize:12, color:C.textSecondary, marginTop:4 }}>{liveScore?.matchedCount ?? result.postScore.matchedCount} of {liveScore?.totalKeywords ?? result.postScore.totalKeywords} keywords matched</div>
               </div>
 
 
@@ -711,11 +1095,11 @@ Return exactly:
               {result.tailored.jobSummary && (
                 <div style={{ ...card, marginBottom:16 }}>
                   <div style={{ fontSize:12, fontWeight:700, color:C.blue, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:12 }}>Role summary</div>
-                  <p style={{ fontSize:14, color:"#cbd5e1", lineHeight:1.75 }}>{result.tailored.jobSummary}</p>
+                  <p style={{ fontSize:14, color:C.textPrimary, lineHeight:1.75 }}>{result.tailored.jobSummary}</p>
                   {result.tailored.visaRequirement && (
-                    <div style={{ marginTop:14, padding:"10px 14px", background:"#1c0a0a", border:`1px solid ${C.red}55`, borderRadius:8 }}>
+                    <div style={{ marginTop:14, padding:"10px 14px", background:C.redBg, border:`1px solid ${C.red}55`, borderRadius:8 }}>
                       <span style={{ fontSize:12, fontWeight:700, color:C.red }}>VISA / WORK RIGHTS REQUIRED: </span>
-                      <span style={{ fontSize:13, color:"#fca5a5" }}>{result.tailored.visaRequirement}</span>
+                      <span style={{ fontSize:13, color:C.red }}>{result.tailored.visaRequirement}</span>
                     </div>
                   )}
                 </div>
@@ -724,24 +1108,34 @@ Return exactly:
               {/* Gap analysis */}
               {result.tailored.gapAnalysis && (
                 <div style={{ ...card, marginBottom:16 }}>
-                  <div style={{ fontSize:12, fontWeight:700, color:C.purple, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:16 }}>Gap analysis</div>
+                  <div style={{ fontSize:12, fontWeight:700, color:C.blue, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:16 }}>Gap analysis</div>
 
                   {/* Overall fit */}
                   {result.tailored.gapAnalysis.overallFit && (
-                    <div style={{ padding:"10px 14px", background:"#0c1a2e", border:`1px solid #1e3a5f`, borderRadius:8, marginBottom:16 }}>
+                    <div style={{ padding:"10px 14px", background:C.blueFaded, border:`1px solid ${C.blueBorder}`, borderRadius:8, marginBottom:16 }}>
                       <div style={{ fontSize:11, fontWeight:700, color:C.blue, marginBottom:4, textTransform:"uppercase", letterSpacing:"0.08em" }}>Overall fit</div>
-                      <p style={{ fontSize:13, color:"#93c5fd", lineHeight:1.6, margin:0 }}>{result.tailored.gapAnalysis.overallFit}</p>
+                      <p style={{ fontSize:13, color:C.blueText, lineHeight:1.6, margin:0 }}>{result.tailored.gapAnalysis.overallFit}</p>
                     </div>
                   )}
 
                   {/* Technology gaps */}
                   {(result.tailored.gapAnalysis.technologies||[]).length > 0 && (
                     <div style={{ marginBottom:16 }}>
-                      <div style={{ fontSize:12, fontWeight:700, color:C.textSecondary, marginBottom:10, textTransform:"uppercase", letterSpacing:"0.08em" }}>Technologies you don't have</div>
+                      <div style={{ fontSize:12, fontWeight:700, color:C.textSecondary, marginBottom:6, textTransform:"uppercase", letterSpacing:"0.08em" }}>Technologies you don't have</div>
+                      <div style={{ fontSize:12, color:C.textSecondary, marginBottom:10 }}>If you have adjacent experience or are learning it, click to let AI find the best place to mention it.</div>
                       <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
-                        {result.tailored.gapAnalysis.technologies.map((t,i)=>(
-                          <span key={i} style={{ fontSize:12, padding:"5px 12px", background:"#1c1030", color:"#c4b5fd", border:`1px solid ${C.purple}55`, borderRadius:20 }}>{t}</span>
-                        ))}
+                        {result.tailored.gapAnalysis.technologies.map((tech,i)=>{
+                          const added = addedKws.has(tech);
+                          const loading = placingKw === tech;
+                          return (
+                            <button key={i} className="kw-pill"
+                              onClick={() => !added && !placingKw && placeKeywordWithAI(tech)}
+                              disabled={loading || (!!placingKw && !loading)}
+                              style={{ fontSize:12, padding:"5px 14px", background: added ? C.greenBg : loading ? C.surface : C.blueFaded, color: added ? C.green : loading ? C.textMuted : C.blueDark, border:`1px solid ${added ? C.greenBorder : loading ? C.border : C.blueBorder}`, borderRadius:20, cursor:(added || !!placingKw) ? "default" : "pointer", fontWeight:600, transition:"all 0.2s", opacity:(!!placingKw && !loading) ? 0.5 : 1 }}>
+                              {added ? `✓ ${tech}` : loading ? `⏳ ${tech}` : `+ ${tech}`}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -752,8 +1146,8 @@ Return exactly:
                       <div style={{ fontSize:12, fontWeight:700, color:C.textSecondary, marginBottom:10, textTransform:"uppercase", letterSpacing:"0.08em" }}>Experience gaps</div>
                       {result.tailored.gapAnalysis.experience.map((e,i)=>(
                         <div key={i} style={{ display:"flex", gap:10, alignItems:"flex-start", marginBottom:8, animation:`fadeUp 0.3s ease ${i*0.07}s both` }}>
-                          <span style={{ color:C.amber, flexShrink:0, fontWeight:700, marginTop:1 }}>—</span>
-                          <span style={{ fontSize:13, color:"#cbd5e1", lineHeight:1.6 }}>{e}</span>
+                          <span style={{ color:C.blue, flexShrink:0, fontWeight:700, marginTop:1 }}>—</span>
+                          <span style={{ fontSize:13, color:C.textPrimary, lineHeight:1.6 }}>{e}</span>
                         </div>
                       ))}
                     </div>
@@ -761,11 +1155,33 @@ Return exactly:
                 </div>
               )}
 
+              {/* Missing keyword pills — AI-powered smart placement */}
+              {liveScore?.missingKeywords?.length > 0 && (
+                <div style={{ ...card, marginBottom:16 }}>
+                  <div style={{ fontSize:12, fontWeight:700, color:C.blue, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:6 }}>Missing keywords</div>
+                  <div style={{ fontSize:12, color:C.textSecondary, marginBottom:12 }}>Click any keyword — AI will find the right place in your CV (summary, a bullet, or skills) and insert it there.</div>
+                  <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
+                    {liveScore.missingKeywords.map((kw,i) => {
+                      const added = addedKws.has(kw);
+                      const loading = placingKw === kw;
+                      return (
+                        <button key={i} className="kw-pill"
+                          onClick={() => !added && !placingKw && placeKeywordWithAI(kw)}
+                          disabled={loading || (!!placingKw && !loading)}
+                          style={{ fontSize:12, padding:"5px 14px", background: added ? C.greenBg : loading ? C.surface : C.blueFaded, color: added ? C.green : loading ? C.textMuted : C.blueDark, border:`1px solid ${added ? C.greenBorder : loading ? C.border : C.blueBorder}`, borderRadius:20, cursor: (added || !!placingKw) ? "default" : "pointer", fontWeight:600, transition:"all 0.2s", opacity: (!!placingKw && !loading) ? 0.5 : 1 }}>
+                          {added ? `✓ ${kw}` : loading ? `⏳ ${kw}` : `+ ${kw}`}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* What AI changed */}
               {result.tailored.tailoringSummary && (
-                <div style={{ ...card, background:"#0c1a2e", borderColor:"#1e3a5f" }}>
+                <div style={{ ...card, background:C.blueFaded, borderColor:C.blueBorder }}>
                   <div style={{ fontSize:12, fontWeight:700, color:C.blue, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:12 }}>What was tailored</div>
-                  <p style={{ fontSize:14, color:"#93c5fd", lineHeight:1.75, margin:0 }}>{result.tailored.tailoringSummary}</p>
+                  <p style={{ fontSize:14, color:C.blueText, lineHeight:1.75, margin:0 }}>{result.tailored.tailoringSummary}</p>
                 </div>
               )}
             </div>
@@ -773,8 +1189,25 @@ Return exactly:
 
           {/* CHANGES */}
           {resultTab === "changes" && (() => {
-            const t = result.tailored;
+            const t = editedTailored || result.tailored;
             const changes = [];
+
+            const editProjBullet = (projName, bulletIdx, text) => {
+              setEditedTailored(prev => {
+                const next = JSON.parse(JSON.stringify(prev));
+                const p = next.reorderedProjects?.find(p => p.name === projName);
+                if (p) { p.tailoredBullets = p.tailoredBullets || [...(p.bullets||[])]; p.tailoredBullets[bulletIdx] = text; }
+                return next;
+              });
+            };
+            const editExpBullet = (role, bulletIdx, text) => {
+              setEditedTailored(prev => {
+                const next = JSON.parse(JSON.stringify(prev));
+                const e = next.reorderedExperience?.find(e => e.role === role);
+                if (e) { e.tailoredBullets = e.tailoredBullets || [...(e.bullets||[])]; e.tailoredBullets[bulletIdx] = text; }
+                return next;
+              });
+            };
 
             // 1. Summary
             const origSummary = profile.summary || "";
@@ -815,7 +1248,7 @@ Return exactly:
               changes.push({ section: "Projects — reordered", items: [{ type: "reorder", original: origProjOrder.join(" → "), tailored: newProjOrder.join(" → ") }] });
             }
 
-            // 4. Project bullets
+            // 4. Project bullets — all bullets shown, changed ones are editable
             (t.reorderedProjects||[]).forEach(newProj => {
               const origProj = (profile.projects||[]).find(p => p.name === newProj.name);
               if (!origProj) return;
@@ -824,9 +1257,11 @@ Return exactly:
               const origBullets = origProj.bullets || [];
               newBullets.forEach((nb, i) => {
                 const ob = origBullets[i] || "";
-                if (nb.trim() !== ob.trim()) bulletItems.push({ original: ob, tailored: nb });
+                bulletItems.push({ original: ob, tailored: nb, onEdit: txt => editProjBullet(newProj.name, i, txt) });
               });
-              if (bulletItems.length) changes.push({ section: `Projects · ${[newProj.role, newProj.name].filter(Boolean).join(" | ")}`, items: bulletItems });
+              if (bulletItems.some(b => b.original.trim() !== b.tailored.trim())) {
+                changes.push({ section: `Projects · ${[newProj.role, newProj.name].filter(Boolean).join(" | ")}`, items: bulletItems });
+              }
             });
 
             // 5. Experience order
@@ -836,7 +1271,7 @@ Return exactly:
               changes.push({ section: "Experience — reordered", items: [{ type: "reorder", original: origExpOrder.join(" → "), tailored: newExpOrder.join(" → ") }] });
             }
 
-            // 6. Experience bullets
+            // 6. Experience bullets — all bullets shown, changed ones are editable
             (t.reorderedExperience||[]).forEach(newExp => {
               const origExp = (profile.experience||[]).find(e => e.role === newExp.role && e.company === newExp.company);
               if (!origExp) return;
@@ -845,9 +1280,11 @@ Return exactly:
               const origBullets = origExp.bullets || [];
               newBullets.forEach((nb, i) => {
                 const ob = origBullets[i] || "";
-                if (nb.trim() !== ob.trim()) bulletItems.push({ original: ob, tailored: nb });
+                bulletItems.push({ original: ob, tailored: nb, onEdit: txt => editExpBullet(newExp.role, i, txt) });
               });
-              if (bulletItems.length) changes.push({ section: `Experience · ${newExp.role} @ ${newExp.company}`, items: bulletItems });
+              if (bulletItems.some(b => b.original.trim() !== b.tailored.trim())) {
+                changes.push({ section: `Experience · ${newExp.role} @ ${newExp.company}`, items: bulletItems });
+              }
             });
 
             const totalChanges = changes.reduce((sum, c) => sum + c.items.length, 0);
@@ -862,30 +1299,30 @@ Return exactly:
                       {totalChanges} change{totalChanges !== 1 ? "s" : ""} across {changes.length} section{changes.length !== 1 ? "s" : ""}
                     </div>
                     {changes.map((group, gi) => (
-                      <div key={gi} style={{ marginBottom:20, animation:`fadeUp 0.3s ease ${gi*0.06}s both` }}>
-                        <div style={{ fontSize:12, fontWeight:700, color:C.teal, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:10 }}>{group.section}</div>
+                      <div key={gi} style={{ marginBottom:20, animation:`fadeUp 0.35s ease ${gi*0.1}s both` }}>
+                        <div style={{ fontSize:12, fontWeight:700, color:C.blue, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:10 }}>{group.section}</div>
                         {group.items.map((item, ii) => (
                           <div key={ii} style={{ ...card, marginBottom:8 }}>
                             {item.type === "reorder" && (
                               <>
                                 <div style={{ fontSize:11, color:C.textSecondary, marginBottom:6 }}>{item.label || "Order changed"}</div>
-                                <div style={{ fontSize:12, color:C.red, marginBottom:4, opacity:0.8, lineHeight:1.6, textDecoration:"line-through" }}>{item.original}</div>
-                                <div style={{ fontSize:12, color:C.green, lineHeight:1.6 }}>{item.tailored}</div>
+                                <div style={{ fontSize:12, color:C.red, background:C.redBg, borderRadius:5, padding:"4px 8px", marginBottom:4, lineHeight:1.6, textDecoration:"line-through", opacity:0.85 }}>{item.original}</div>
+                                <div style={{ fontSize:12, color:C.green, background:C.greenBg, borderRadius:5, padding:"4px 8px", lineHeight:1.6, fontWeight:600 }}>{item.tailored}</div>
                               </>
                             )}
                             {item.type === "added" && (
-                              <div style={{ fontSize:13, color:C.green }}>
-                                <span style={{ fontSize:11, color:C.textSecondary, marginRight:8, textTransform:"uppercase", letterSpacing:"0.06em" }}>{item.label}</span>
+                              <div style={{ fontSize:13, color:C.green, background:C.greenBg, borderRadius:5, padding:"6px 10px", fontWeight:600 }}>
+                                <span style={{ fontSize:11, color:C.textSecondary, marginRight:8, textTransform:"uppercase", letterSpacing:"0.06em", fontWeight:400 }}>{item.label}</span>
                                 + {item.tailored}
                               </div>
                             )}
                             {item.type === "removed" && (
-                              <div style={{ fontSize:13, color:C.red, textDecoration:"line-through", opacity:0.8 }}>
-                                <span style={{ fontSize:11, color:C.textSecondary, marginRight:8, textTransform:"uppercase", letterSpacing:"0.06em" }}>{item.label}</span>
+                              <div style={{ fontSize:13, color:C.red, background:C.redBg, borderRadius:5, padding:"6px 10px", textDecoration:"line-through", opacity:0.85 }}>
+                                <span style={{ fontSize:11, color:C.textSecondary, marginRight:8, textTransform:"uppercase", letterSpacing:"0.06em", textDecoration:"none" }}>{item.label}</span>
                                 — {item.original}
                               </div>
                             )}
-                            {!item.type && <DiffLine original={item.original} tailored={item.tailored} />}
+                            {!item.type && <DiffLine original={item.original} tailored={item.tailored} onEdit={item.onEdit} />}
                           </div>
                         ))}
                       </div>
@@ -911,7 +1348,7 @@ Return exactly:
               <span style={{ fontSize:16, fontWeight:700 }}>CV Preview</span>
               <button onClick={()=>setShowPreview(false)} style={{ fontSize:22, color:C.textSecondary, background:"transparent", border:"none", cursor:"pointer", lineHeight:1 }}>x</button>
             </div>
-            <CVPreview profile={profile} tailored={result.tailored} />
+            <CVPreview profile={profile} tailored={editedTailored || result.tailored} />
             <div style={{ display:"flex", gap:12, marginTop:16 }}>
               <button onClick={downloadDocx} disabled={downloading} style={{ ...primaryBtn, flex:1 }}>{downloading?"Generating...":"Download .docx"}</button>
               <button onClick={()=>setShowPreview(false)} style={ghostBtn}>Close</button>
