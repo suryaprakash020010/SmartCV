@@ -411,11 +411,11 @@ export default function SmartCV() {
   const [profiles, setProfiles] = useState(() => {
     try {
       const saved = localStorage.getItem("smartcv_profiles");
-      if (!saved) return [{ id: "default", label: "Surya – Data Science", data: YOUR_PROFILE }];
+      if (!saved) return [{ id: "default", label: "Sample User", data: YOUR_PROFILE }];
       const parsed = JSON.parse(saved);
       // Migrate: fill in any missing top-level fields from YOUR_PROFILE for the default profile
       return parsed.map(p => p.id === "default" ? { ...p, data: { ...YOUR_PROFILE, ...p.data } } : p);
-    } catch { return [{ id: "default", label: "Surya – Data Science", data: YOUR_PROFILE }]; }
+    } catch { return [{ id: "default", label: "Sample User", data: YOUR_PROFILE }]; }
   });
 
   const [activeProfileId, setActiveProfileId] = useState(() => {
@@ -854,6 +854,62 @@ Return exactly this JSON (bullets first so nothing important gets cut off):
   const ghostBtn   = { padding: "13px 20px", fontWeight: 600, fontSize: 14, background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, color: C.textSecondary, cursor: "pointer", transition: "all 0.15s" };
 
   const liveImprovement = result ? ((liveScore?.finalScore ?? result.postScore.finalScore) - result.preScore.finalScore) : 0;
+
+  // SHA-256 hash of "FetchmyCV@2026" — plaintext never stored in bundle
+  const PW_HASH = "ce3178fec6b30bf76f3ac8ec715b1d4e7aa2801bf32e4227cfc17f8782607f64";
+  const hashPassword = async (pw) => {
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(pw));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+  };
+
+  const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem("smartcv_auth") === PW_HASH);
+  const [pwInput, setPwInput] = useState("");
+  const [pwError, setPwError] = useState(false);
+  const [pwChecking, setPwChecking] = useState(false);
+  const [attempts, setAttempts] = useState(() => parseInt(sessionStorage.getItem("smartcv_attempts") || "0"));
+
+  const checkPassword = async () => {
+    if (pwChecking || attempts >= 5) return;
+    setPwChecking(true);
+    const hash = await hashPassword(pwInput);
+    if (hash === PW_HASH) {
+      sessionStorage.setItem("smartcv_auth", PW_HASH);
+      sessionStorage.removeItem("smartcv_attempts");
+      setUnlocked(true);
+    } else {
+      const next = attempts + 1;
+      setAttempts(next);
+      sessionStorage.setItem("smartcv_attempts", String(next));
+      setPwError(true);
+    }
+    setPwChecking(false);
+  };
+
+  if (!unlocked) return (
+    <div style={{ minHeight:"100vh", background:C.bg, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"system-ui, -apple-system, sans-serif" }}>
+      <div style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:16, padding:"40px 36px", width:340, boxShadow:"0 8px 32px #0000001a", animation:"fadeIn 0.3s ease" }}>
+        <div style={{ textAlign:"center", marginBottom:28 }}>
+          <img src={smartCVLogo} alt="SmartCV" style={{ height:36, marginBottom:16 }} />
+          <div style={{ fontSize:14, color:C.textSecondary }}>Enter password to continue</div>
+        </div>
+        {attempts >= 5 ? (
+          <div style={{ textAlign:"center", fontSize:13, color:C.red, padding:"12px", background:C.redBg, borderRadius:8 }}>Too many attempts. Close and reopen the tab to try again.</div>
+        ) : (<>
+          <input
+            type="password" value={pwInput} onChange={e=>{setPwInput(e.target.value); setPwError(false);}}
+            onKeyDown={e=>e.key==="Enter" && checkPassword()}
+            placeholder="Password" autoFocus
+            style={{ width:"100%", padding:"11px 14px", fontSize:14, borderRadius:9, border:`1px solid ${pwError ? C.red : C.border}`, background:C.surface, color:C.textPrimary, boxSizing:"border-box", outline:"none", marginBottom:8 }}
+          />
+          {pwError && <div style={{ fontSize:12, color:C.red, marginBottom:8 }}>Incorrect password{attempts > 1 ? ` (${5 - attempts} attempts left)` : ""}</div>}
+          <button onClick={checkPassword} disabled={pwChecking || !pwInput}
+            style={{ width:"100%", padding:"11px", background:GRAD, border:"none", borderRadius:9, color:"white", fontSize:14, fontWeight:600, cursor:"pointer", opacity: pwChecking || !pwInput ? 0.7 : 1 }}>
+            {pwChecking ? "Checking…" : "Unlock"}
+          </button>
+        </>)}
+      </div>
+    </div>
+  );
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, color: C.textPrimary, fontFamily: "system-ui, -apple-system, sans-serif" }}>
