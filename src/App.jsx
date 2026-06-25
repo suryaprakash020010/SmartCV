@@ -441,11 +441,17 @@ export default function SmartCV() {
     localStorage.setItem("smartcv_active_profile", id);
   };
 
+  // True if this profile is still the untouched dummy default
+  const isPlaceholder = (p) => p.id === "default" && p.data.name === YOUR_PROFILE.name;
+
   const addProfile = () => {
     const id = `profile_${Date.now()}`;
     const label = `New Profile ${profiles.length + 1}`;
     const newProfile = { id, label, data: { name: "", email: "", phone: "", location: "", linkedin: "", portfolio: "", summary: "", skillCategories: [], projects: [], experience: [], education: [] } };
-    const next = [...profiles, newProfile];
+    // If the only profile is the untouched dummy, replace it instead of adding alongside
+    const next = profiles.length === 1 && isPlaceholder(profiles[0])
+      ? [newProfile]
+      : [...profiles, newProfile];
     setProfiles(next);
     localStorage.setItem("smartcv_profiles", JSON.stringify(next));
     setActiveProfileId(id);
@@ -482,6 +488,8 @@ export default function SmartCV() {
   const [showProfilePicker, setShowProfilePicker] = useState(false);
   const [editingLabel, setEditingLabel] = useState(null);
   const [addedKws, setAddedKws]         = useState(new Set());
+  const [importingCV, setImportingCV]   = useState(false);
+  const [importError, setImportError]   = useState(null);
   const apiKey = import.meta.env.VITE_OPENAI_KEY;
 
   useEffect(() => {
@@ -554,6 +562,87 @@ RULES: Location names (cities, countries) and soft/generic phrases MUST go into 
       setPlacingKw(null);
       setTimeout(() => setKwToast(null), 3500);
     }
+  };
+
+  const extractTextFromPDF = async (file) => {
+    const pdfjsLib = await import("pdfjs-dist");
+    pdfjsLib.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.mjs", import.meta.url).toString();
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const pages = await Promise.all(Array.from({ length: pdf.numPages }, (_, i) => pdf.getPage(i + 1)));
+    const texts = await Promise.all(pages.map(async p => {
+      const content = await p.getTextContent();
+      return content.items.map(item => item.str).join(" ");
+    }));
+    return texts.join("\n");
+  };
+
+  const parseCVWithAI = async (text) => {
+    if (!apiKey) { setImportError("VITE_OPENAI_KEY not set in .env file."); return; }
+    setImportingCV(true); setImportError(null);
+    try {
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+        body: JSON.stringify({
+          model: OPENAI_MODEL,
+          max_completion_tokens: 2000,
+          response_format: { type: "json_object" },
+          messages: [
+            { role: "system", content: `Extract structured CV data from the text and return ONLY valid JSON matching this exact shape:
+{
+  "name": "full name",
+  "email": "email address",
+  "phone": "phone number",
+  "location": "city, state/country",
+  "linkedin": "linkedin url or handle",
+  "portfolio": "portfolio website url or empty string",
+  "summary": "professional summary paragraph",
+  "skillCategories": [{ "category": "category name", "skills": ["skill1", "skill2"] }],
+  "projects": [{ "name": "project name", "role": "role/title", "startDate": "Mon YYYY", "endDate": "Mon YYYY or Present", "bullets": ["bullet 1", "bullet 2"] }],
+  "experience": [{ "company": "company name", "role": "job title", "startDate": "Mon YYYY", "endDate": "Mon YYYY or Present", "bullets": ["bullet 1", "bullet 2"] }],
+  "education": [{ "degree": "degree name", "institution": "university name", "startDate": "Mon YYYY", "endDate": "Mon YYYY or Present", "extra": "GPA/WAM/honours info", "notes": "relevant coursework or notes" }]
+}
+Use empty arrays [] for any section not found. Never invent data not present in the CV.` },
+            { role: "user", content: text.slice(0, 8000) }
+          ]
+        })
+      });
+      const data = await res.json();
+      const parsed = JSON.parse(data.choices?.[0]?.message?.content || "{}");
+      if (!parsed.name) { setImportError("Couldn't extract profile data — try uploading a clearer PDF."); return; }
+      setProfile(parsed);
+      // Rename the profile label to the person's name and drop the dummy if still present
+      setProfiles(prev => {
+        const updated = prev.map(p => p.id === activeProfileId ? { ...p, label: parsed.name } : p);
+        const withoutDummy = updated.filter(p => !(p.id === "default" && p.data.name === YOUR_PROFILE.name && p.id !== activeProfileId));
+        const next = withoutDummy.length ? withoutDummy : updated;
+        localStorage.setItem("smartcv_profiles", JSON.stringify(next));
+        return next;
+      });
+    } catch(e) {
+      setImportError("Parse failed — " + e.message);
+    } finally {
+      setImportingCV(false);
+    }
+  };
+
+  const handleCVFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportError(null);
+    try {
+      let text = "";
+      if (file.type === "application/pdf") {
+        text = await extractTextFromPDF(file);
+      } else {
+        text = await file.text();
+      }
+      await parseCVWithAI(text);
+    } catch(e) {
+      setImportError("Could not read file — " + e.message);
+    }
+    e.target.value = "";
   };
 
   const tailorCV = async () => {
@@ -773,6 +862,7 @@ Return exactly this JSON (bullets first so nothing important gets cut off):
         @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
         @keyframes spin    { to{transform:rotate(360deg)} }
         @keyframes scan    { 0%{top:0%} 50%{top:calc(100% - 3px)} 100%{top:0%} }
+        @keyframes pulse   { 0%,100%{box-shadow:0 0 0 3px ${C.blueBorder}} 50%{box-shadow:0 0 0 5px ${C.blueFaded}} }
         * { box-sizing:border-box; margin:0; padding:0; }
         textarea, input { outline:none; font-family:inherit; }
         textarea:focus, input:focus { border-color:${C.blue} !important; box-shadow:0 0 0 3px ${C.blue}22; }
@@ -803,13 +893,13 @@ Return exactly this JSON (bullets first so nothing important gets cut off):
             {showProfilePicker && (
               <div style={{ position:"absolute", top:"calc(100% + 8px)", right:0, background:C.card, border:`1px solid ${C.border}`, borderRadius:12, padding:8, minWidth:240, zIndex:200, animation:"fadeUp 0.2s ease", boxShadow:"0 16px 40px #00000080" }}>
                 {profiles.map(p => (
-                  <div key={p.id} style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 10px", borderRadius:8, background: p.id===activeProfileId ? "#1e293b" : "transparent", marginBottom:2 }}>
+                  <div key={p.id} style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 10px", borderRadius:8, background: p.id===activeProfileId ? C.blueFaded : "transparent", border: p.id===activeProfileId ? `1px solid ${C.blueBorder}` : "1px solid transparent", marginBottom:2 }}>
                     {editingLabel === p.id ? (
                       <input autoFocus value={p.label} onChange={e=>updateProfileLabel(p.id,e.target.value)}
                         onBlur={()=>setEditingLabel(null)} onKeyDown={e=>e.key==="Enter"&&setEditingLabel(null)}
                         style={{ flex:1, background:"transparent", border:"none", color:C.textPrimary, fontSize:13, outline:"none" }} />
                     ) : (
-                      <span onClick={()=>{switchProfile(p.id);setShowProfilePicker(false);}} style={{ flex:1, fontSize:13, color: p.id===activeProfileId?C.textPrimary:C.textSecondary, cursor:"pointer" }}>{p.label}</span>
+                      <span onClick={()=>{switchProfile(p.id);setShowProfilePicker(false);}} style={{ flex:1, fontSize:13, color: p.id===activeProfileId?C.blueText:C.textSecondary, fontWeight: p.id===activeProfileId?600:400, cursor:"pointer" }}>{p.label}</span>
                     )}
                     <button onClick={()=>setEditingLabel(p.id)} style={{ fontSize:11, color:C.textSecondary, background:"transparent", border:"none", cursor:"pointer", padding:"2px 4px" }}>rename</button>
                     {profiles.length > 1 && <button onClick={()=>deleteProfile(p.id)} style={{ fontSize:11, color:C.red, background:"transparent", border:"none", cursor:"pointer", padding:"2px 4px" }}>delete</button>}
@@ -868,8 +958,24 @@ Return exactly this JSON (bullets first so nothing important gets cut off):
       {screen === "profile" && (
         <div style={{ maxWidth:780, margin:"0 auto", padding:"32px 32px 60px", animation:"fadeIn 0.3s ease" }}>
           <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:24 }}>
-            <h2 style={{ fontSize:22, fontWeight:700, color:C.textPrimary, margin:0 }}>Editing: {activeProfile.label}</h2>
+            <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+              <div style={{ width:10, height:10, borderRadius:"50%", background:GRAD, boxShadow:`0 0 0 3px ${C.blueBorder}`, animation:"pulse 2s ease-in-out infinite" }} />
+              <span style={{ fontSize:11, fontWeight:700, color:C.blue, textTransform:"uppercase", letterSpacing:"0.1em" }}>Editing</span>
+            </div>
+            <h2 style={{ fontSize:20, fontWeight:700, color:C.textPrimary, margin:0 }}>{activeProfile.label}</h2>
           </div>
+
+          {/* Import from CV — only shown when profile is empty/unset */}
+          {!profile.name && <div style={{ ...card, marginBottom:24, border:`1px dashed ${C.blueBorder}`, background:C.blueFaded }}>
+            <div style={{ fontSize:13, fontWeight:700, color:C.blueText, marginBottom:4 }}>Import your existing CV</div>
+            <div style={{ fontSize:12, color:C.textSecondary, marginBottom:14 }}>We will autofill all fields below.</div>
+            <label style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"8px 16px", background: importingCV ? C.surface : C.card, border:`1px solid ${C.border}`, borderRadius:9, fontSize:13, fontWeight:600, color: importingCV ? C.textMuted : C.textPrimary, cursor: importingCV ? "default" : "pointer" }}>
+              {importingCV ? "⏳ Reading CV…" : "📄 Upload PDF"}
+              <input type="file" accept=".pdf" style={{ display:"none" }} onChange={handleCVFileUpload} disabled={importingCV} />
+            </label>
+            {importError && <div style={{ marginTop:10, fontSize:12, color:C.red }}>{importError}</div>}
+          </div>}
+
           <ProfileForm profile={profile} setProfile={setProfile} />
         </div>
       )}
